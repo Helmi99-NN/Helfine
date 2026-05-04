@@ -107,6 +107,8 @@ export default function Login({ onAuthSuccess }) {
             <input
               key={index}
               type="password" // Use password to hide the actual numbers if desired, or text to show them. Let's use text for PIN so they see what they type. Wait, "password" hides it. Let's use text but mask it with CSS, or just "password".
+              inputMode="numeric"
+              pattern="[0-9]*"
               maxLength="1"
               ref={el => inputRefs.current[index] = el}
               value={data}
