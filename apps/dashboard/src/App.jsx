@@ -45,12 +45,28 @@ import Resume from './components/Resume';
 import Login from './components/Login';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('helfine_auth') === 'true');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('helfine_auth') === 'true');
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDbLoading, setIsDbLoading] = useState(true);
   const [dbError, setDbError] = useState(null);
+  
+  // Auto-lock when app goes to background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        sessionStorage.removeItem('helfine_auth');
+        setIsAuthenticated(false);
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
   
   // Global Financial State
   const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS);
@@ -211,7 +227,7 @@ function App() {
     return (
       <Login 
         onAuthSuccess={() => {
-          localStorage.setItem('helfine_auth', 'true');
+          sessionStorage.setItem('helfine_auth', 'true');
           setIsAuthenticated(true);
         }} 
       />
@@ -230,7 +246,7 @@ function App() {
   return (
     <>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} financialData={financialData} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { localStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} />
+      <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} />
       {activeTab === 'portfolio' && <Dashboard setActiveTab={setActiveTab} financialData={financialData} />}
       {activeTab === 'analytics' && <Analytics financialData={financialData} />}
       {activeTab === 'investments' && <Investments financialData={financialData} />}

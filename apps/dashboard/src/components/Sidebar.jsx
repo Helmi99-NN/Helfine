@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Sidebar({ activeTab, setActiveTab, financialData, isOpen, onClose }) {
   const handleLogout = () => {
-    localStorage.removeItem('helfine_auth');
+    sessionStorage.removeItem('helfine_auth');
     if (financialData?.setIsAuthenticated) {
       financialData.setIsAuthenticated(false);
     }
