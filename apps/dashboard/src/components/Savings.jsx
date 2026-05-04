@@ -363,33 +363,6 @@ export default function Savings({ financialData }) {
         </div>
       )}
 
-      {/* Sticky Auto-Sum Footer Bar */}
-      <div className="fixed bottom-0 md:left-64 right-0 z-30 bg-slate-800est/90 backdrop-blur-xl border-t border-outline-variant px-4 md:px-margin-page py-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <div className="w-12 h-12 rounded-lg bg-secondary-container/20 border border-secondary/30 flex items-center justify-center text-secondary">
-              <span className="material-symbols-outlined">calculate</span>
-            </div>
-            <div>
-              <h4 className="font-label-sm text-label-sm text-slate-400 uppercase tracking-wider mb-1">Total Tabungan Manual</h4>
-              <div className="flex items-baseline gap-2">
-                <span className="font-data-mono text-[16px] text-slate-400">Rp</span>
-                <span className="font-display-lg text-3xl text-secondary tracking-tight">{financialData.formatCurrency(totalValue)}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="font-label-sm text-label-sm text-slate-400 mr-4 italic">Semua data tersinkronisasi</span>
-            <button className="px-6 py-2 rounded-lg border border-outline-variant bg-surface-container hover:bg-slate-800 text-slate-200 font-label-sm text-label-sm transition-colors">
-              Batal
-            </button>
-            <button className="px-8 py-2 rounded-lg bg-secondary text-white font-label-sm text-label-sm font-bold hover:bg-secondary/90 transition-colors shadow-lg shadow-secondary/20">
-              Simpan Alokasi
-            </button>
-          </div>
-        </div>
-      </div>
     </>
   );
 }
