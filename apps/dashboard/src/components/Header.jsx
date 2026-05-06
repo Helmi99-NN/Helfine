@@ -19,16 +19,16 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
   };
 
   return (
-    <header ref={headerRef} className="fixed top-0 right-0 left-0 md:left-64 h-16 flex items-center justify-between px-8 z-50 bg-slate-900/40 backdrop-blur-md docked full-width border-b border-white/10 shadow-sm font-['Plus_Jakarta_Sans'] tracking-tight text-emerald-400 transition-colors duration-300">
+    <header ref={headerRef} className="fixed top-0 right-0 left-0 md:left-64 h-16 flex items-center justify-between px-8 z-50 bg-slate-900/40 backdrop-blur-md docked full-width border-b border-white/10 shadow-sm font-['Plus_Jakarta_Sans'] tracking-tight text-primary transition-colors duration-300">
       {/* Brand / Title Area */}
       <div className="flex items-center gap-4">
-        <span className="text-2xl font-black text-emerald-400 italic font-['Plus_Jakarta_Sans'] tracking-tight md:hidden">HELFINE</span>
+        <span className="text-2xl font-black text-primary italic font-['Plus_Jakarta_Sans'] tracking-tight md:hidden">HELFINE</span>
         <h2 className="hidden md:block font-headline-md text-headline-md text-slate-200">{title}</h2>
       </div>
       {/* Search */}
       <div className="hidden md:flex flex-1 max-w-md relative group ml-auto mr-8">
-        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors">search</span>
-        <input className="w-full bg-slate-800 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-outline focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" placeholder="Search across operations..." type="text"/>
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+        <input className="w-full bg-slate-800 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Cari transaksi atau kategori..." type="text"/>
       </div>
       {/* Trailing Actions */}
       <div className="flex items-center gap-4">
@@ -37,26 +37,26 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
         <div className="relative">
           <button 
             onClick={() => setActiveDropdown(activeDropdown === 'notifications' ? null : 'notifications')}
-            className={`p-2 hover:bg-white/5 hover:text-emerald-400 transition-all duration-200 rounded-full scale-95 active:scale-90 relative ${activeDropdown === 'notifications' ? 'bg-white/10 text-emerald-400' : 'text-slate-400'}`}
+            className={`p-2 hover:bg-white/5 hover:text-primary transition-all duration-200 rounded-full scale-95 active:scale-90 relative ${activeDropdown === 'notifications' ? 'bg-white/10 text-primary' : 'text-slate-300'}`}
           >
             <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-2 right-2.5 w-2 h-2 bg-emerald-500 rounded-full border-[1.5px] border-surface"></span>
+            <span className="absolute top-2 right-2.5 w-2 h-2 bg-primary rounded-full border-[1.5px] border-surface"></span>
           </button>
           
           {activeDropdown === 'notifications' && (
             <div className="absolute right-0 mt-2 w-80 bg-slate-800est backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200">
               <div className="px-4 py-2 border-b border-white/5 flex justify-between items-center bg-surface-container/50">
                 <span className="font-bold text-slate-200 text-sm">Notifikasi</span>
-                <span className="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">2 Baru</span>
+                <span className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full">2 Baru</span>
               </div>
               <div className="max-h-64 overflow-y-auto">
                 <button className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 flex gap-3 items-start">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="material-symbols-outlined text-emerald-400 text-[18px]">account_balance</span>
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="material-symbols-outlined text-primary text-[18px]">account_balance</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-200">Dana darurat terisi</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Alokasi ke Bank Jago sukses Rp 500.000</p>
+                    <p className="text-xs text-slate-300 mt-0.5">Alokasi ke Bank Jago sukses Rp 500.000</p>
                     <p className="text-[10px] text-slate-500 mt-1 font-data-mono">2 jam yang lalu</p>
                   </div>
                 </button>
@@ -66,13 +66,13 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-200">Target Ipot tercapai</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Portofolio Hana melewati Rp 1.000.000</p>
+                    <p className="text-xs text-slate-300 mt-0.5">Portofolio Hana melewati Rp 1.000.000</p>
                     <p className="text-[10px] text-slate-500 mt-1 font-data-mono">1 hari yang lalu</p>
                   </div>
                 </button>
               </div>
               <div className="px-4 py-2 border-t border-white/5 text-center bg-surface-container/50">
-                <a href="#" className="text-xs text-emerald-400 hover:underline font-bold">Tandai semua dibaca</a>
+                <a href="#" className="text-xs text-primary hover:underline font-bold">Tandai semua dibaca</a>
               </div>
             </div>
           )}
@@ -81,7 +81,7 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
         {/* Privacy Toggle */}
         <button 
           onClick={() => setIsPrivacyMode?.(!isPrivacyMode)}
-          className={`p-2 text-slate-400 hover:bg-white/5 hover:text-emerald-400 transition-all duration-200 rounded-full scale-95 active:scale-90 hidden sm:block ${isPrivacyMode ? 'text-emerald-400' : ''}`} 
+          className={`p-2 text-slate-300 hover:bg-white/5 hover:text-primary transition-all duration-200 rounded-full scale-95 active:scale-90 hidden sm:block ${isPrivacyMode ? 'text-primary' : ''}`} 
           title={isPrivacyMode ? "Tampilkan Nominal" : "Sembunyikan Nominal"}
         >
           <span className="material-symbols-outlined">
@@ -93,7 +93,7 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
         <div className="relative hidden sm:block">
           <button 
             onClick={() => setActiveDropdown(activeDropdown === 'settings' ? null : 'settings')}
-            className={`p-2 hover:bg-white/5 hover:text-emerald-400 transition-all duration-200 rounded-full scale-95 active:scale-90 ${activeDropdown === 'settings' ? 'bg-white/10 text-emerald-400' : 'text-slate-400'}`}
+            className={`p-2 hover:bg-white/5 hover:text-primary transition-all duration-200 rounded-full scale-95 active:scale-90 ${activeDropdown === 'settings' ? 'bg-white/10 text-primary' : 'text-slate-300'}`}
           >
             <span className="material-symbols-outlined">settings</span>
           </button>
@@ -104,15 +104,15 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
                 <span className="font-bold text-slate-200 text-sm">Pengaturan</span>
               </div>
               <div className="py-1">
-                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-400 hover:text-slate-200">
+                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-300 hover:text-slate-200">
                   <span className="material-symbols-outlined text-[18px]">account_circle</span>
                   Pengaturan Akun
                 </button>
-                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-400 hover:text-slate-200">
-                  <span className="material-symbols-outlined text-[18px] text-emerald-400">palette</span>
+                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-300 hover:text-slate-200">
+                  <span className="material-symbols-outlined text-[18px] text-primary">palette</span>
                   Tampilan & Tema
                 </button>
-                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-400 hover:text-slate-200">
+                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-300 hover:text-slate-200">
                   <span className="material-symbols-outlined text-[18px]">security</span>
                   Keamanan & Privasi
                 </button>
@@ -127,7 +127,7 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
         <div className="relative">
           <button 
             onClick={() => setActiveDropdown(activeDropdown === 'profile' ? null : 'profile')}
-            className={`w-8 h-8 rounded-full overflow-hidden border transition-colors scale-95 active:scale-90 ${activeDropdown === 'profile' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-white/10 hover:border-emerald-500'}`}
+            className={`w-8 h-8 rounded-full overflow-hidden border transition-colors scale-95 active:scale-90 ${activeDropdown === 'profile' ? 'border-primary ring-2 ring-primary/20' : 'border-white/10 hover:border-primary'}`}
           >
             <img alt="Wealth Manager Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5GAo0Ip1NBCypzIgiRdZrSI6jkhMOk4ttICN93IriFIb9LkQRJPLmVUVazMGzefLaK6Naxb0RyYmxW391WsL_j1C2aPn5wLRSeEZcOnpm5ixULQwjIMYxhsdxgpgihDOdRnX2s5myQiwH3Amxp0E_8TayNr7hvTXUat81VnmiSVTpHXXYMjxHoIl5OaXWk422-EuX9sZScxdeN6MohbG6M0DlftALp0MsP-emB2BzndKTOM8_I7kGkJM8QegapLBH4hh7ON6Ris90"/>
           </button>
@@ -140,16 +140,16 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
                 </div>
                 <div>
                   <p className="font-bold text-slate-200 text-sm">Helmi</p>
-                  <p className="text-xs text-slate-400">Asset Manager</p>
+                  <p className="text-xs text-slate-300">Asset Manager</p>
                 </div>
               </div>
-              <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-400 hover:text-slate-200 group">
-                <span className="material-symbols-outlined text-[18px] group-hover:text-emerald-400 transition-colors">person</span>
+              <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-300 hover:text-slate-200 group">
+                <span className="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">person</span>
                 Profil Saya
               </button>
-              <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-400 hover:text-slate-200 group">
-                <span className="material-symbols-outlined text-[18px] group-hover:text-emerald-400 transition-colors">verified_user</span>
-                Premium Status <span className="ml-auto text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-widest border border-emerald-500/20">Pro</span>
+              <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-300 hover:text-slate-200 group">
+                <span className="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">verified_user</span>
+                Premium Status <span className="ml-auto text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-widest border border-primary/20">Pro</span>
               </button>
               <div className="h-px bg-white/5 my-1"></div>
               <button onClick={onLogout} className="w-full text-left px-4 py-2.5 hover:bg-[#F43F5E]/10 transition-colors flex gap-3 items-center text-sm text-[#F43F5E] hover:text-[#F43F5E]">
@@ -171,7 +171,7 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
           </button>
           <button 
             onClick={onMenuClick}
-            className="p-2 text-slate-400 hover:text-emerald-400 transition-colors"
+            className="p-2 text-slate-300 hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-2xl">menu</span>
           </button>

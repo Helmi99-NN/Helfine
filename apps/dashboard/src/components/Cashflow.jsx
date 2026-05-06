@@ -76,17 +76,17 @@ export default function Cashflow({ financialData }) {
       <div className="max-w-[1200px] mx-auto space-y-8">
         <div>
           <h2 className="text-3xl md:text-display-lg font-display-lg text-slate-200 flex items-center gap-3">
-            <span className="material-symbols-outlined text-3xl md:text-4xl text-emerald-400">account_balance_wallet</span>
+            <span className="material-symbols-outlined text-3xl md:text-4xl text-primary">account_balance_wallet</span>
             Arus Kas (Cashflow)
           </h2>
-          <p className="text-slate-400 mt-2 font-body-base text-body-base">Catat semua pemasukan dan pengeluaran ekstra yang akan diakumulasikan secara otomatis setiap tanggal 20.</p>
+          <p className="text-slate-300 mt-2 font-body-base text-body-base">Catat semua pemasukan dan pengeluaran ekstra yang akan diakumulasikan secara otomatis setiap tanggal 20.</p>
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="glass-card rounded-xl p-6 flex flex-col justify-between">
             <h3 className="text-label-sm font-data-mono text-slate-500 uppercase tracking-wider mb-2">Total Pendapatan Bulan Ini</h3>
-            <div className="text-2xl md:text-3xl font-bold tracking-tight text-emerald-400">
+            <div className="text-2xl md:text-3xl font-bold tracking-tight text-primary">
               Rp {formatCurrency(totalIncome)}
             </div>
           </div>
@@ -96,9 +96,9 @@ export default function Cashflow({ financialData }) {
               Rp {formatCurrency(totalExpense)}
             </div>
           </div>
-          <div className="glass-card rounded-xl p-6 flex flex-col justify-between hover:border-emerald-500/30 transition-colors">
+          <div className="glass-card rounded-xl p-6 flex flex-col justify-between hover:border-primary/30 transition-colors">
             <h3 className="text-label-sm font-data-mono text-slate-500 uppercase tracking-wider mb-2">Net Cashflow</h3>
-            <div className={`text-2xl md:text-3xl font-bold tracking-tight ${netCashflow >= 0 ? 'text-emerald-400' : 'text-error'}`}>
+            <div className={`text-2xl md:text-3xl font-bold tracking-tight ${netCashflow >= 0 ? 'text-primary' : 'text-error'}`}>
               Rp {formatCurrency(netCashflow)}
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function Cashflow({ financialData }) {
           {/* Input Form Panel */}
           <section className="col-span-12 lg:col-span-4 glass-panel rounded-xl p-6 flex flex-col h-fit shadow-[0_0_20px_rgba(0,0,0,0.2)]">
             <h3 className="text-headline-sm font-headline-sm text-slate-200 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-400">add_circle</span>
+              <span className="material-symbols-outlined text-primary">add_circle</span>
               Catat Transaksi Baru
             </h3>
             
@@ -118,7 +118,7 @@ export default function Cashflow({ financialData }) {
                 <div className="flex gap-3 bg-surface-container-lowest/30 p-1.5 rounded-xl border border-outline-variant/50">
                   <button 
                     onClick={() => setType('Income')}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${type === 'Income' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'text-slate-500 hover:text-slate-200 hover:bg-surface-container/50'}`}
+                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${type === 'Income' ? 'bg-primary/20 text-primary border border-primary/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'text-slate-500 hover:text-slate-200 hover:bg-surface-container/50'}`}
                   >
                     <span className="material-symbols-outlined text-sm">arrow_downward</span>
                     Pemasukan
@@ -136,13 +136,13 @@ export default function Cashflow({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Tanggal</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-sm">calendar_today</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">calendar_today</span>
                   <input 
                     type="date" 
                     value={date} 
                     onChange={(e) => setDate(e.target.value)}
                     onKeyDown={(e) => handleEnter(e, catRef)}
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner [color-scheme:dark]" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]" 
                   />
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function Cashflow({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Kategori / Nama</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-sm">category</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">category</span>
                   <input 
                     ref={catRef}
                     type="text" 
@@ -158,7 +158,7 @@ export default function Cashflow({ financialData }) {
                     onChange={(e) => setCategory(e.target.value)}
                     onKeyDown={(e) => handleEnter(e, amountRef)}
                     placeholder={type === 'Income' ? "Misal: Gaji, Komisi Mesin..." : "Misal: Iklan Shopee..."}
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function Cashflow({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Nominal (Rp)</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-data-mono text-slate-400 text-sm">Rp</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-data-mono text-slate-300 text-sm">Rp</span>
                   <input 
                     ref={amountRef}
                     type="number" 
@@ -174,7 +174,7 @@ export default function Cashflow({ financialData }) {
                     onChange={(e) => setAmount(e.target.value)}
                     onKeyDown={(e) => handleEnter(e, 'submit')}
                     placeholder="0" 
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
               </div>
@@ -183,7 +183,7 @@ export default function Cashflow({ financialData }) {
             <button 
               onClick={handleAddRecord} 
               disabled={!category || !amount}
-              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold ${(!category || !amount) ? 'bg-surface-container text-slate-500 cursor-not-allowed' : type === 'Income' ? 'bg-emerald-500 text-on-primary hover:bg-emerald-500-fixed shadow-[0_0_15px_rgba(78,222,163,0.3)]' : 'bg-[#FDE047] text-slate-900 hover:bg-[#FEF08A] shadow-[0_0_15px_rgba(253,224,71,0.3)]'}`}
+              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold ${(!category || !amount) ? 'bg-surface-container text-slate-500 cursor-not-allowed' : type === 'Income' ? 'bg-primary text-on-primary hover:bg-primary-fixed shadow-[0_0_15px_rgba(78,222,163,0.3)]' : 'bg-[#FDE047] text-slate-900 hover:bg-[#FEF08A] shadow-[0_0_15px_rgba(253,224,71,0.3)]'}`}
             >
               <span className="material-symbols-outlined text-sm">save</span>
               Simpan Transaksi
@@ -194,7 +194,7 @@ export default function Cashflow({ financialData }) {
           <section className="col-span-12 lg:col-span-8 glass-panel rounded-xl p-0 flex flex-col overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.2)]">
             <div className="p-6 border-b border-white/5 bg-surface-container/20">
               <h3 className="text-headline-sm font-headline-sm text-slate-200 flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-400">receipt_long</span>
+                <span className="material-symbols-outlined text-primary">receipt_long</span>
                 Riwayat Arus Kas
               </h3>
             </div>
@@ -213,8 +213,12 @@ export default function Cashflow({ financialData }) {
                 <tbody className="divide-y divide-outline-variant/10 text-sm">
                   {records.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="p-8 text-center text-slate-500">
-                        Belum ada catatan arus kas.
+                      <td colSpan="5" className="p-16 text-center text-slate-500">
+                        <div className="flex flex-col items-center justify-center opacity-80">
+                          <span className="material-symbols-outlined text-6xl mb-4 text-slate-600">account_balance_wallet</span>
+                          <p className="text-lg font-medium text-slate-300">Belum Ada Arus Kas</p>
+                          <p className="text-sm mt-1 text-slate-500">Catat pemasukan atau pengeluaran ekstra Anda di sini.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -222,7 +226,7 @@ export default function Cashflow({ financialData }) {
                       <tr key={record.id} className="hover:bg-surface-container/20 transition-colors group">
                         <td className="p-4 text-slate-200 whitespace-nowrap">{new Date(record.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})}</td>
                         <td className="p-4">
-                          <div className={`text-[10px] px-2 py-0.5 rounded border uppercase tracking-widest inline-flex items-center gap-1 font-bold ${record.type === 'Income' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-[#FDE047]/30 text-[#FDE047] bg-[#FDE047]/10'}`}>
+                          <div className={`text-[10px] px-2 py-0.5 rounded border uppercase tracking-widest inline-flex items-center gap-1 font-bold ${record.type === 'Income' ? 'border-primary/30 text-primary bg-primary/10' : 'border-[#FDE047]/30 text-[#FDE047] bg-[#FDE047]/10'}`}>
                             <span className="material-symbols-outlined text-[12px]">
                               {record.type === 'Income' ? 'arrow_downward' : 'arrow_upward'}
                             </span>
@@ -230,7 +234,7 @@ export default function Cashflow({ financialData }) {
                           </div>
                         </td>
                         <td className="p-4 font-medium text-slate-200">{record.category}</td>
-                        <td className={`p-4 text-right font-data-mono font-bold ${record.type === 'Income' ? 'text-emerald-400' : 'text-[#FDE047]'}`}>
+                        <td className={`p-4 text-right font-data-mono font-bold ${record.type === 'Income' ? 'text-primary' : 'text-[#FDE047]'}`}>
                           {record.type === 'Income' ? '+' : '-'}Rp {formatCurrency(record.amount)}
                         </td>
                         <td className="p-4 text-center">

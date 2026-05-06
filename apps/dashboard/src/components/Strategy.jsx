@@ -47,7 +47,7 @@ export default function Strategy({ financialData }) {
         return { containerClass: 'bg-[#eab308]/20 border-[#eab308]/30', circleClass: 'bg-[#eab308] right-0.5', label: 'Terpakai' };
       case 'filled':
       default:
-        return { containerClass: 'bg-emerald-500/20 border-emerald-500/30', circleClass: 'bg-emerald-500 left-[50%] -translate-x-[50%]', label: 'Terisi' };
+        return { containerClass: 'bg-primary/20 border-primary/30', circleClass: 'bg-primary left-[50%] -translate-x-[50%]', label: 'Terisi' };
     }
   };
 
@@ -82,7 +82,7 @@ export default function Strategy({ financialData }) {
         {/* Page Header */}
         <div>
           <h2 className="text-3xl md:text-display-lg font-display-lg text-slate-200">Operasional</h2>
-          <p className="text-slate-400 mt-2 font-body-base text-body-base">Kelola pengeluaran harian dan strategi alokasi dompet.</p>
+          <p className="text-slate-300 mt-2 font-body-base text-body-base">Kelola pengeluaran harian dan strategi alokasi dompet.</p>
         </div>
         
         {/* Bento Grid Layout */}
@@ -92,12 +92,12 @@ export default function Strategy({ financialData }) {
           <section className="col-span-12 xl:col-span-8 glass-panel rounded-xl p-container-padding flex flex-col h-full hover:shadow-[0_0_20px_rgba(78,222,163,0.05)] transition-shadow duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-stack-md gap-4">
               <h3 className="text-headline-md font-headline-md text-slate-200 flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-400">account_tree</span>
+                <span className="material-symbols-outlined text-primary">account_tree</span>
                 Alokasi Operasional
               </h3>
               <div className="sm:text-right bg-slate-800/50 px-4 py-2 rounded-lg border border-white/10">
-                <p className="font-label-sm text-label-sm text-slate-400">Total Operasional Terkini</p>
-                <p className="font-display-sm text-2xl text-emerald-400 tracking-tight">Rp {financialData.formatCurrency(operationalBalance)}</p>
+                <p className="font-label-sm text-label-sm text-slate-300">Total Operasional Terkini</p>
+                <p className="font-display-sm text-2xl text-primary tracking-tight">Rp {financialData.formatCurrency(operationalBalance)}</p>
               </div>
             </div>
             
@@ -106,10 +106,10 @@ export default function Strategy({ financialData }) {
                 const { containerClass, circleClass, label } = getToggleVisuals(wallet.status);
                 
                 return (
-                  <div key={wallet.id} className="bg-surface-container/50 border border-white/10 rounded-lg p-4 flex flex-col gap-3 transition-colors group hover:border-emerald-500/50">
+                  <div key={wallet.id} className="bg-surface-container/50 border border-white/10 rounded-lg p-4 flex flex-col gap-3 transition-colors group hover:border-primary/50">
                     <div className="flex justify-between items-start">
-                      <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-white/5 group-hover:bg-emerald-500/10">
-                        <span className="material-symbols-outlined text-lg text-emerald-400/80 group-hover:text-emerald-400 transition-colors">{wallet.icon}</span>
+                      <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-white/5 group-hover:bg-primary/10">
+                        <span className="material-symbols-outlined text-lg text-primary/80 group-hover:text-primary transition-colors">{wallet.icon}</span>
                       </div>
                       
                       {/* 3-State Toggle */}
@@ -121,17 +121,17 @@ export default function Strategy({ financialData }) {
                         >
                           <div className={`w-3 h-3 rounded-full absolute transition-all duration-300 shadow-sm ${circleClass}`}></div>
                         </div>
-                        <span className="text-[9px] text-slate-400 font-data-mono uppercase tracking-wider">{label}</span>
+                        <span className="text-[9px] text-slate-300 font-data-mono uppercase tracking-wider">{label}</span>
                       </div>
                     </div>
                     <div>
-                      <div className="text-data-mono font-data-mono text-slate-200 group-hover:text-emerald-400 transition-colors truncate">{wallet.name}</div>
+                      <div className="text-data-mono font-data-mono text-slate-200 group-hover:text-primary transition-colors truncate">{wallet.name}</div>
                     </div>
                     <div className="mt-auto">
                       <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 font-data-mono text-[10px] text-slate-400">Rp</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 font-data-mono text-[10px] text-slate-300">Rp</span>
                         <input 
-                          className="w-full bg-surface-container-lowest/50 border border-outline-variant text-emerald-400 font-data-mono text-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-md py-1.5 pl-6 pr-2 transition-all shadow-inner text-right" 
+                          className="w-full bg-surface-container-lowest/50 border border-outline-variant text-primary font-data-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary rounded-md py-1.5 pl-6 pr-2 transition-all shadow-inner text-right" 
                           type="text" 
                           value={wallet.value === 0 ? '' : wallet.value.toLocaleString('id-ID')}
                           onChange={(e) => handleValueChange(wallet.id, e.target.value)}
@@ -177,7 +177,7 @@ export default function Strategy({ financialData }) {
               <div className="text-label-sm font-label-sm text-slate-500">Bulan ini:</div>
               {playTransactions.map(tx => (
                 <div key={tx.id} className="flex justify-between items-center text-sm py-1 border-b border-white/5">
-                  <span className="text-slate-400">{tx.name}</span>
+                  <span className="text-slate-300">{tx.name}</span>
                   <div className="text-right">
                     <span className="block text-slate-200">Rp {financialData.formatCurrency(tx.amount)}</span>
                     <span className="block text-xs text-slate-500">{tx.time}</span>

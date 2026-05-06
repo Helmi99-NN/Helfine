@@ -92,17 +92,17 @@ export default function Trading({ financialData }) {
       <div className="max-w-[1200px] mx-auto space-y-8">
         <div>
           <h2 className="text-display-lg font-display-lg text-slate-200 flex items-center gap-3">
-            <span className="material-symbols-outlined text-4xl text-emerald-400">candlestick_chart</span>
+            <span className="material-symbols-outlined text-4xl text-primary">candlestick_chart</span>
             Jurnal Trading
           </h2>
-          <p className="text-slate-400 mt-2 font-body-base text-body-base">Catat dan evaluasi performa trading Anda secara sistematis.</p>
+          <p className="text-slate-300 mt-2 font-body-base text-body-base">Catat dan evaluasi performa trading Anda secara sistematis.</p>
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass-card rounded-xl p-6 flex flex-col justify-between hover:border-emerald-500/30 transition-colors">
+          <div className="glass-card rounded-xl p-6 flex flex-col justify-between hover:border-primary/30 transition-colors">
             <h3 className="text-label-sm font-data-mono text-slate-500 uppercase tracking-wider mb-2">Total Net Profit/Loss</h3>
-            <div className={`text-3xl font-bold tracking-tight ${totalProfitLoss >= 0 ? 'text-emerald-400' : 'text-error'}`}>
+            <div className={`text-3xl font-bold tracking-tight ${totalProfitLoss >= 0 ? 'text-primary' : 'text-error'}`}>
               Rp {formatNumber(totalProfitLoss)}
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function Trading({ financialData }) {
           {/* Input Form Panel */}
           <section className="col-span-12 lg:col-span-4 glass-panel rounded-xl p-6 flex flex-col hover:shadow-[0_0_30px_rgba(78,222,163,0.08)] transition-shadow duration-300 h-fit">
             <h3 className="text-headline-sm font-headline-sm text-slate-200 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-400">add_circle</span>
+              <span className="material-symbols-outlined text-primary">add_circle</span>
               Catat Trade Baru
             </h3>
             
@@ -136,7 +136,7 @@ export default function Trading({ financialData }) {
                 <div className="flex gap-3 bg-surface-container-lowest/30 p-1.5 rounded-xl border border-outline-variant/50">
                   <button 
                     onClick={() => setSekuritas('Stockbit')}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${sekuritas === 'Stockbit' ? 'bg-emerald-500 text-on-primary shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'text-slate-500 hover:text-slate-200 hover:bg-surface-container/50'}`}
+                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${sekuritas === 'Stockbit' ? 'bg-primary text-on-primary shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'text-slate-500 hover:text-slate-200 hover:bg-surface-container/50'}`}
                   >
                     Stockbit
                   </button>
@@ -152,13 +152,13 @@ export default function Trading({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Tanggal</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-sm">calendar_today</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">calendar_today</span>
                   <input 
                     type="date" 
                     value={date} 
                     onChange={(e) => setDate(e.target.value)}
                     onKeyDown={(e) => handleEnter(e, codeRef)}
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner [color-scheme:dark]" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]" 
                   />
                 </div>
               </div>
@@ -166,7 +166,7 @@ export default function Trading({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Kode Saham</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-sm">tag</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">tag</span>
                   <input 
                     ref={codeRef}
                     type="text" 
@@ -174,7 +174,7 @@ export default function Trading({ financialData }) {
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     onKeyDown={(e) => handleEnter(e, lotRef)}
                     placeholder="Contoh: BUMI" 
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner uppercase" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner uppercase" 
                   />
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function Trading({ financialData }) {
                     onChange={(e) => setLot(e.target.value)}
                     onKeyDown={(e) => handleEnter(e, buyRef)}
                     placeholder="0" 
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
               </div>
@@ -204,7 +204,7 @@ export default function Trading({ financialData }) {
                     onChange={(e) => setBuy(e.target.value)}
                     onKeyDown={(e) => handleEnter(e, sellRef)}
                     placeholder="0" 
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
                 <div>
@@ -216,16 +216,54 @@ export default function Trading({ financialData }) {
                     onChange={(e) => setSell(e.target.value)}
                     onKeyDown={(e) => handleEnter(e, 'submit')}
                     placeholder="0" 
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
               </div>
             </div>
 
+            {/* Live Calculator */}
+            {(() => {
+              const calcLot = parseInt(lot, 10) || 0;
+              const calcBuy = parseFloat(buy) || 0;
+              const calcSell = parseFloat(sell) || 0;
+              
+              const totalBuy = calcLot * 100 * calcBuy;
+              const totalSell = calcLot * 100 * calcSell;
+              const profitLoss = totalSell - totalBuy;
+              const percentage = calcBuy > 0 ? ((calcSell - calcBuy) / calcBuy) * 100 : 0;
+              const isProfit = profitLoss >= 0;
+
+              if (calcLot > 0 && calcBuy > 0) {
+                return (
+                  <div className="mt-4 bg-surface-container/30 border border-outline-variant/30 rounded-xl p-4 shadow-inner">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs text-slate-500 uppercase tracking-wider">Modal Diperlukan:</span>
+                      <span className="text-sm font-data-mono font-bold text-slate-200">Rp {financialData.formatCurrency(totalBuy)}</span>
+                    </div>
+                    {calcSell > 0 && (
+                      <div className="flex justify-between items-center pt-3 mt-1 border-t border-white/5">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider">Potensi Hasil:</span>
+                        <div className="text-right">
+                          <span className={`text-sm font-data-mono font-bold block ${isProfit ? 'text-primary' : 'text-error'}`}>
+                            {isProfit ? '+' : ''}Rp {financialData.formatCurrency(profitLoss)}
+                          </span>
+                          <span className={`text-[10px] font-data-mono ${isProfit ? 'text-primary' : 'text-error'}`}>
+                            {isProfit ? '+' : ''}{percentage.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <button 
               onClick={handleAddTrade} 
               disabled={!code || !lot || !buy || !sell}
-              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${(!code || !lot || !buy || !sell) ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-emerald-500 text-on-primary hover:bg-emerald-500-fixed'}`}
+              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${(!code || !lot || !buy || !sell) ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-on-primary hover:bg-primary-fixed'}`}
             >
               <span className="material-symbols-outlined text-sm">save</span>
               Simpan Trade
@@ -236,7 +274,7 @@ export default function Trading({ financialData }) {
           <section className="col-span-12 lg:col-span-8 glass-panel rounded-xl p-0 flex flex-col overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.2)]">
             <div className="p-6 border-b border-white/5">
               <h3 className="text-headline-sm font-headline-sm text-slate-200 flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-400">table_view</span>
+                <span className="material-symbols-outlined text-primary">table_view</span>
                 Riwayat Transaksi
               </h3>
             </div>
@@ -259,8 +297,12 @@ export default function Trading({ financialData }) {
                 <tbody className="divide-y divide-outline-variant/10 text-sm">
                   {enrichedTrades.length === 0 ? (
                     <tr>
-                      <td colSpan="9" className="p-8 text-center text-slate-500">
-                        Belum ada catatan trading.
+                      <td colSpan="9" className="p-16 text-center text-slate-500">
+                        <div className="flex flex-col items-center justify-center opacity-80">
+                          <span className="material-symbols-outlined text-6xl mb-4 text-slate-600">query_stats</span>
+                          <p className="text-lg font-medium text-slate-300">Belum Ada Catatan Trading</p>
+                          <p className="text-sm mt-1 text-slate-500">Mulai catat transaksi pertama Anda di panel sebelah kiri.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -271,7 +313,7 @@ export default function Trading({ financialData }) {
                           <td className="p-4 text-slate-200 whitespace-nowrap">{new Date(trade.date).toLocaleDateString('id-ID')}</td>
                           <td className="p-4">
                             <div className="font-bold text-slate-200">{trade.code}</div>
-                            <div className={`text-[9px] px-1.5 py-0.5 mt-1 rounded border uppercase tracking-widest inline-block ${trade.sekuritas === 'KB Valburi' ? 'border-secondary/30 text-secondary' : 'border-emerald-500/30 text-emerald-400'}`}>
+                            <div className={`text-[9px] px-1.5 py-0.5 mt-1 rounded border uppercase tracking-widest inline-block ${trade.sekuritas === 'KB Valburi' ? 'border-secondary/30 text-secondary' : 'border-primary/30 text-primary'}`}>
                               {trade.sekuritas || 'Stockbit'}
                             </div>
                           </td>
@@ -279,10 +321,10 @@ export default function Trading({ financialData }) {
                           <td className="p-4 text-right text-slate-200 font-data-mono">Rp {formatNumber(trade.buy)}</td>
                           <td className="p-4 text-right text-slate-500 font-data-mono">Rp {formatNumber(trade.totalBuy)}</td>
                           <td className="p-4 text-right text-slate-200 font-data-mono">Rp {formatNumber(trade.sell)}</td>
-                          <td className={`p-4 text-right font-data-mono font-semibold ${isProfit ? 'bg-emerald-500/20 text-emerald-400 border-l-4 border-emerald-500' : 'bg-error/20 text-error border-l-4 border-error'}`}>
+                          <td className={`p-4 text-right font-data-mono font-semibold ${isProfit ? 'bg-primary/20 text-primary border-l-4 border-primary' : 'bg-error/20 text-error border-l-4 border-error'}`}>
                             {isProfit ? '+' : ''}{trade.percentage.toFixed(2)}%
                           </td>
-                          <td className={`p-4 text-right font-data-mono font-semibold ${isProfit ? 'bg-emerald-500/20 text-emerald-400' : 'bg-error/20 text-error'}`}>
+                          <td className={`p-4 text-right font-data-mono font-semibold ${isProfit ? 'bg-primary/20 text-primary' : 'bg-error/20 text-error'}`}>
                             {isProfit ? '+' : ''}Rp {formatNumber(trade.result)}
                           </td>
                           <td className="p-4 text-center">

@@ -4,10 +4,10 @@
 
 @layer utilities {
     .glass-card {
-        background: rgba(19, 27, 46, 0.4);
+        background: rgba(15, 11, 30, 0.4); /* #0F0B1E */
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(134, 148, 138, 0.2);
+        border: 1px solid rgba(67, 58, 107, 0.2); /* #433A6B */
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
     .glass-card:hover {
@@ -26,9 +26,22 @@
         border-radius: inherit;
     }
     .glass-panel {
-        background: rgba(11, 19, 38, 0.6);
+        background: rgba(5, 3, 10, 0.6); /* #05030A */
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.05);
     }
+}
+
+/* Privacy Mode */
+.privacy-active .money-value, 
+.privacy-active .recharts-text, 
+.privacy-active .recharts-tooltip-item-value {
+    filter: blur(5px);
+    opacity: 0.8;
+    user-select: none;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+.money-value {
+    transition: filter 0.3s ease, opacity 0.3s ease;
 }

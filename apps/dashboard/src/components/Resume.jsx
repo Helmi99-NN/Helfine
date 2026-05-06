@@ -146,8 +146,8 @@ export default function Resume({ financialData }) {
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-800est/95 backdrop-blur-xl border border-white/10 rounded-xl p-4 shadow-2xl">
-          <p className="text-slate-400 text-xs mb-2 font-data-mono">{label}</p>
-          <p className="text-emerald-400 font-bold text-lg">
+          <p className="text-slate-300 text-xs mb-2 font-data-mono">{label}</p>
+          <p className="text-primary font-bold text-lg">
             Rp {formatCurrency(payload[0].value)}
           </p>
         </div>
@@ -160,12 +160,12 @@ export default function Resume({ financialData }) {
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-800est/95 backdrop-blur-xl border border-white/10 rounded-xl p-4 shadow-2xl">
-          <p className="text-slate-400 text-xs mb-2 font-data-mono">{label}</p>
+          <p className="text-slate-300 text-xs mb-2 font-data-mono">{label}</p>
           {payload.map((entry, index) => (
             <div key={index} className="flex items-center justify-between gap-4 mb-1">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                <span className="text-sm text-slate-400">{entry.name}</span>
+                <span className="text-sm text-slate-300">{entry.name}</span>
               </div>
               <span className="font-bold text-sm" style={{ color: entry.color }}>
                 Rp {formatCurrency(entry.value)}
@@ -183,10 +183,10 @@ export default function Resume({ financialData }) {
       <div className="max-w-[1400px] mx-auto space-y-8">
         <div>
           <h2 className="text-display-lg font-display-lg text-slate-200 flex items-center gap-3">
-            <span className="material-symbols-outlined text-4xl text-emerald-400">history</span>
+            <span className="material-symbols-outlined text-4xl text-primary">history</span>
             Resume Bulanan
           </h2>
-          <p className="text-slate-400 mt-2 font-body-base text-body-base max-w-3xl">
+          <p className="text-slate-300 mt-2 font-body-base text-body-base max-w-3xl">
             Rangkuman historis pergerakan total aset, pendapatan, dan pengeluaran setiap bulan. Diadaptasi dari catatan manual spreadsheet Anda menjadi visual interaktif.
           </p>
         </div>
@@ -195,9 +195,9 @@ export default function Resume({ financialData }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Total Asset Trend Area Chart */}
           <div className="glass-card rounded-xl p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-emerald-500/10 transition-colors duration-500"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary/10 transition-colors duration-500"></div>
             <h3 className="font-headline-sm text-headline-sm text-slate-200 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-400">monitoring</span>
+              <span className="material-symbols-outlined text-primary">monitoring</span>
               Tren Total Awal Bulan
             </h3>
             <div className="w-full h-[280px]">
@@ -245,7 +245,7 @@ export default function Resume({ financialData }) {
         <div className="glass-panel rounded-xl overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.2)]">
           <div className="p-6 border-b border-white/5 bg-surface-container/20">
             <h3 className="text-headline-sm font-headline-sm text-slate-200 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-400">table_chart</span>
+              <span className="material-symbols-outlined text-primary">table_chart</span>
               Data Historis Keuangan
             </h3>
           </div>
@@ -269,7 +269,7 @@ export default function Resume({ financialData }) {
                 </tr>
                 {mergedInitialBalances.map((item, idx) => (
                   <tr key={idx} className="border-b border-white/5 group">
-                    <td className="p-3 px-4 text-slate-400 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
+                    <td className="p-3 px-4 text-slate-300 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
                     {item.values.map((val, i) => (
                       <td key={i} className="p-3 px-4 text-right font-data-mono text-slate-200">
                         {val === 0 ? '-' : `Rp ${formatCurrency(val)}`}
@@ -278,10 +278,10 @@ export default function Resume({ financialData }) {
                   </tr>
                 ))}
                 {/* Total Awal Bulan */}
-                <tr className="border-b border-emerald-500/30">
-                  <td className="p-4 font-bold text-emerald-400 uppercase tracking-widest border-r border-emerald-500/30 sticky left-0 bg-[#063321] z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">TOTAL</td>
+                <tr className="border-b border-primary/30">
+                  <td className="p-4 font-bold text-primary uppercase tracking-widest border-r border-primary/30 sticky left-0 bg-[#063321] z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">TOTAL</td>
                   {mergedTotalInitial.map((val, i) => (
-                    <td key={i} className="p-4 text-right font-data-mono font-bold text-emerald-400">
+                    <td key={i} className="p-4 text-right font-data-mono font-bold text-primary">
                       Rp {formatCurrency(val)}
                     </td>
                   ))}
@@ -294,11 +294,11 @@ export default function Resume({ financialData }) {
                 </tr>
                 {mergedIncomes.map((item, idx) => (
                   <tr key={idx} className="border-b border-white/5 group">
-                    <td className="p-3 px-4 text-slate-400 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
+                    <td className="p-3 px-4 text-slate-300 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
                     {item.values.map((val, i) => {
                       let colorClass = "text-slate-200";
                       let bgClass = "";
-                      if (item.highlight && val > 0) { colorClass = "text-emerald-400 font-bold"; bgClass = "bg-emerald-500/10"; }
+                      if (item.highlight && val > 0) { colorClass = "text-primary font-bold"; bgClass = "bg-primary/10"; }
                       else if (item.highlight && val < 0) { colorClass = "text-[#FDE047] font-bold"; bgClass = "bg-[#FDE047]/10"; }
                       
                       return (
@@ -310,13 +310,13 @@ export default function Resume({ financialData }) {
                   </tr>
                 ))}
                 <tr className="border-y border-white/5 bg-[#131b2e]">
-                  <td colSpan={allMonths.length + 1} className="p-3 px-4 font-bold tracking-widest uppercase text-slate-400 text-xs">
+                  <td colSpan={allMonths.length + 1} className="p-3 px-4 font-bold tracking-widest uppercase text-slate-300 text-xs">
                     Komisi Mesin
                   </td>
                 </tr>
                 {mergedKomisiMesin.map((item, idx) => (
                   <tr key={idx} className="border-b border-white/5 group">
-                    <td className="p-3 px-4 pl-8 text-slate-400 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
+                    <td className="p-3 px-4 pl-8 text-slate-300 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
                     {item.values.map((val, i) => (
                       <td key={i} className="p-3 px-4 text-right font-data-mono text-slate-200">
                         {val === 0 ? '-' : `Rp ${formatCurrency(val)}`}
@@ -325,10 +325,10 @@ export default function Resume({ financialData }) {
                   </tr>
                 ))}
                 {/* Total Pendapatan */}
-                <tr className="border-b border-emerald-500/30">
-                  <td className="p-4 font-bold text-emerald-400 uppercase tracking-widest border-r border-emerald-500/30 sticky left-0 bg-[#063321] z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">TTL PENDAPATAN</td>
+                <tr className="border-b border-primary/30">
+                  <td className="p-4 font-bold text-primary uppercase tracking-widest border-r border-primary/30 sticky left-0 bg-[#063321] z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">TTL PENDAPATAN</td>
                   {mergedTotalIncome.map((val, i) => (
-                    <td key={i} className="p-4 text-right font-data-mono font-bold text-emerald-400">
+                    <td key={i} className="p-4 text-right font-data-mono font-bold text-primary">
                       Rp {formatCurrency(val)}
                     </td>
                   ))}
@@ -341,7 +341,7 @@ export default function Resume({ financialData }) {
                 </tr>
                 {mergedExpenses.map((item, idx) => (
                   <tr key={idx} className="border-b border-white/5 group">
-                    <td className="p-3 px-4 text-slate-400 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
+                    <td className="p-3 px-4 text-slate-300 border-r border-white/5 sticky left-0 bg-[#0b1326] group-hover:bg-[#131b2e] transition-colors z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">{item.name}</td>
                     {item.values.map((val, i) => (
                       <td key={i} className="p-3 px-4 text-right font-data-mono text-slate-200">
                         {val === 0 ? '-' : `Rp ${formatCurrency(val)}`}

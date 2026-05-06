@@ -194,8 +194,8 @@ export default function Makan({ financialData }) {
     if (active && payload && payload.length) {
       return (
         <div className="glass-card p-3 rounded-lg border border-white/10 shadow-lg bg-surface/90 backdrop-blur-md">
-          <p className="text-slate-400 text-xs mb-1">{label}</p>
-          <p className="text-emerald-400 font-bold">
+          <p className="text-slate-300 text-xs mb-1">{label}</p>
+          <p className="text-primary font-bold">
             Rp {financialData.formatCurrency(payload[0].value)}
           </p>
         </div>
@@ -209,10 +209,10 @@ export default function Makan({ financialData }) {
       <div className="max-w-[1200px] mx-auto space-y-8">
         <div>
           <h2 className="text-3xl md:text-display-lg font-display-lg text-slate-200 flex items-center gap-3">
-            <span className="material-symbols-outlined text-3xl md:text-4xl text-emerald-400">restaurant</span>
+            <span className="material-symbols-outlined text-3xl md:text-4xl text-primary">restaurant</span>
             Pencatatan Makan
           </h2>
-          <p className="text-slate-400 mt-2 font-body-base text-body-base">Lacak pengeluaran konsumsi Anda dari jatah bulanan dan harian.</p>
+          <p className="text-slate-300 mt-2 font-body-base text-body-base">Lacak pengeluaran konsumsi Anda dari jatah bulanan dan harian.</p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
@@ -222,23 +222,35 @@ export default function Makan({ financialData }) {
             <div>
               <h3 className="text-label-lg text-slate-500 font-data-mono tracking-widest uppercase mb-4">Anggaran Bulan Ini</h3>
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 mb-6">
-                <div className={`text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight ${isFoodOverBudget ? 'text-error' : 'text-emerald-400'}`}>
+                <div className={`text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight ${isFoodOverBudget ? 'text-error' : 'text-primary'}`}>
                   Rp {financialData.formatCurrency(totalFoodSpent)}
                 </div>
                 <div className="text-data-mono font-data-mono text-slate-500 text-sm md:text-xl mb-1 md:mb-2">/ Rp {financialData.formatCurrency(monthlyFoodBudget)}</div>
               </div>
               
               {/* Progress Bar */}
-              <div className="h-5 w-full bg-slate-800 rounded-full overflow-hidden mt-6 border border-white/10 relative shadow-inner">
-                <div className={`h-full rounded-full transition-all duration-700 ease-out ${isFoodOverBudget ? 'bg-error shadow-[0_0_15px_rgba(255,180,171,0.6)] w-full' : 'bg-gradient-to-r from-primary to-[#4edea3] shadow-[0_0_15px_rgba(78,222,163,0.4)]'}`} style={{ width: isFoodOverBudget ? '100%' : `${(totalFoodSpent / monthlyFoodBudget) * 100}%` }}></div>
-              </div>
+              {(() => {
+                const percentage = (totalFoodSpent / monthlyFoodBudget) * 100;
+                let barColorClass = 'bg-primary shadow-[0_0_15px_rgba(98,52,255,0.4)]'; // Menggunakan tema primary Craftify
+                if (percentage >= 100) {
+                  barColorClass = 'bg-error shadow-[0_0_15px_rgba(255,180,171,0.6)] w-full';
+                } else if (percentage >= 80) {
+                  barColorClass = 'bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]';
+                }
+                
+                return (
+                  <div className="h-5 w-full bg-slate-800 rounded-full overflow-hidden mt-6 border border-white/10 relative shadow-inner">
+                    <div className={`h-full rounded-full transition-all duration-700 ease-out ${barColorClass}`} style={{ width: percentage >= 100 ? '100%' : `${percentage}%` }}></div>
+                  </div>
+                );
+              })()}
               
               <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className={`flex items-center gap-2 bg-surface-container/50 px-5 py-2.5 rounded-full border ${isFoodOverBudget ? 'border-error/30' : 'border-emerald-500/30'}`}>
+                <div className={`flex items-center gap-2 bg-surface-container/50 px-5 py-2.5 rounded-full border ${isFoodOverBudget ? 'border-error/30' : 'border-primary/30'}`}>
                   <span className="material-symbols-outlined text-lg" style={{ color: isFoodOverBudget ? '#ffb4ab' : '#4edea3' }}>
                     {isFoodOverBudget ? 'warning' : 'check_circle'}
                   </span>
-                  <span className={`text-label-md font-label-md ${isFoodOverBudget ? 'text-error' : 'text-emerald-400'}`}>
+                  <span className={`text-label-md font-label-md ${isFoodOverBudget ? 'text-error' : 'text-primary'}`}>
                     {isFoodOverBudget ? `Overbudget Rp ${financialData.formatCurrency(Math.abs(remainingFoodBudget))}` : `Tersisa Rp ${financialData.formatCurrency(remainingFoodBudget)}`}
                   </span>
                 </div>
@@ -250,9 +262,9 @@ export default function Makan({ financialData }) {
               
               {/* Rekap Net Lebih/Hemat Periode Ini */}
               <div className="mt-8">
-                <div className={`border p-4 rounded-xl flex items-center justify-between ${isNetHemat ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-error-container/10 border-error/20'}`}>
+                <div className={`border p-4 rounded-xl flex items-center justify-between ${isNetHemat ? 'bg-primary/10 border-primary/20' : 'bg-error-container/10 border-error/20'}`}>
                   <div>
-                    <div className={`flex items-center gap-2 mb-1 ${isNetHemat ? 'text-emerald-400' : 'text-error'}`}>
+                    <div className={`flex items-center gap-2 mb-1 ${isNetHemat ? 'text-primary' : 'text-error'}`}>
                       <span className="material-symbols-outlined text-sm">
                         {isNetHemat ? 'savings' : 'trending_up'}
                       </span>
@@ -260,11 +272,11 @@ export default function Makan({ financialData }) {
                         {isNetHemat ? 'TOTAL HEMAT' : 'TOTAL LEBIH'}
                       </span>
                     </div>
-                    <div className={`text-[10px] uppercase tracking-wider ${isNetHemat ? 'text-emerald-400/70' : 'text-error/70'}`}>
+                    <div className={`text-[10px] uppercase tracking-wider ${isNetHemat ? 'text-primary/70' : 'text-error/70'}`}>
                       SEJAK {periodStartLabel}
                     </div>
                   </div>
-                  <div className={`text-xl sm:text-2xl md:text-3xl font-bold font-data-mono tracking-tight ${isNetHemat ? 'text-emerald-400' : 'text-error'}`}>
+                  <div className={`text-xl sm:text-2xl md:text-3xl font-bold font-data-mono tracking-tight ${isNetHemat ? 'text-primary' : 'text-error'}`}>
                     {isNetHemat ? '+' : '-'}Rp {financialData.formatCurrency(absNetSavings)}
                   </div>
                 </div>
@@ -272,12 +284,12 @@ export default function Makan({ financialData }) {
               
               {/* Breakdown Cash vs Saldo */}
               <div className="mt-4 grid grid-cols-2 gap-4">
-                <div className="bg-surface-container/40 p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center group transition-colors hover:bg-surface-container/60 hover:border-emerald-500/30">
+                <div className="bg-surface-container/40 p-3 rounded-xl border border-white/5 flex flex-col items-center justify-center group transition-colors hover:bg-surface-container/60 hover:border-primary/30">
                   <div className="text-xs text-slate-500 mb-1 font-medium tracking-wide uppercase">Sisa Cash</div>
                   <div className="flex items-center">
-                    <span className="text-sm font-data-mono text-slate-400 mr-1">Rp</span>
+                    <span className="text-sm font-data-mono text-slate-300 mr-1">Rp</span>
                     <input 
-                      className="w-full max-w-[140px] bg-transparent border-b border-transparent focus:border-emerald-500 text-lg sm:text-xl font-data-mono text-slate-200 text-center outline-none transition-colors"
+                      className="w-full max-w-[140px] bg-transparent border-b border-transparent focus:border-primary text-lg sm:text-xl font-data-mono text-slate-200 text-center outline-none transition-colors"
                       value={remainingCash === 0 ? '' : remainingCash.toLocaleString('id-ID')}
                       onChange={handleRemainingCashChange}
                       placeholder="0"
@@ -304,7 +316,7 @@ export default function Makan({ financialData }) {
           {/* Input Form Panel */}
           <section className="col-span-12 lg:col-span-5 glass-panel rounded-xl p-8 flex flex-col hover:shadow-[0_0_30px_rgba(78,222,163,0.08)] transition-shadow duration-300">
             <h3 className="text-headline-sm font-headline-sm text-slate-200 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-400">add_circle</span>
+              <span className="material-symbols-outlined text-primary">add_circle</span>
               Catat Pengeluaran
             </h3>
             
@@ -315,7 +327,7 @@ export default function Makan({ financialData }) {
                 <div className="flex gap-3 bg-surface-container-lowest/30 p-1.5 rounded-xl border border-outline-variant/50">
                   <button 
                     onClick={() => setFoodMethod('Cash')}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${foodMethod === 'Cash' ? 'bg-emerald-500 text-on-primary shadow-[0_0_10px_rgba(78,222,163,0.3)]' : 'text-slate-500 hover:text-slate-200 hover:bg-surface-container/50'}`}
+                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${foodMethod === 'Cash' ? 'bg-primary text-on-primary shadow-[0_0_10px_rgba(78,222,163,0.3)]' : 'text-slate-500 hover:text-slate-200 hover:bg-surface-container/50'}`}
                   >
                     Cash
                   </button>
@@ -331,13 +343,13 @@ export default function Makan({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Tanggal</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-sm">calendar_today</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">calendar_today</span>
                   <input 
                     type="date" 
                     value={foodDate} 
                     onChange={(e) => setFoodDate(e.target.value)} 
                     onKeyDown={handleDateKeyDown}
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner [color-scheme:dark]" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]" 
                   />
                 </div>
               </div>
@@ -345,7 +357,7 @@ export default function Makan({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Keterangan</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-sm">edit_note</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">edit_note</span>
                   <input 
                     ref={ketRef}
                     type="text" 
@@ -353,7 +365,7 @@ export default function Makan({ financialData }) {
                     onChange={(e) => setFoodDesc(e.target.value)} 
                     onKeyDown={handleKetKeyDown}
                     placeholder="Contoh: Nasi Padang..." 
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
               </div>
@@ -361,7 +373,7 @@ export default function Makan({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Nominal</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-data-mono text-slate-400">Rp</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-data-mono text-slate-300">Rp</span>
                   <input 
                     ref={nomRef}
                     type="text" 
@@ -369,7 +381,7 @@ export default function Makan({ financialData }) {
                     onChange={handleNominalChange} 
                     onKeyDown={handleNomKeyDown}
                     placeholder="0" 
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-12 text-data-mono font-data-mono text-lg text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-12 text-data-mono font-data-mono text-lg text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
               </div>
@@ -378,7 +390,7 @@ export default function Makan({ financialData }) {
             <button 
               onClick={handleAddFood} 
               disabled={!foodNominal || !foodDesc}
-              className={`w-full mt-6 py-4 rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${!foodNominal || !foodDesc ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-emerald-500 text-on-primary hover:bg-emerald-500-fixed'}`}
+              className={`w-full mt-6 py-4 rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${!foodNominal || !foodDesc ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-on-primary hover:bg-primary-fixed'}`}
             >
               <span className="material-symbols-outlined">add_shopping_cart</span>
               Simpan Transaksi
@@ -391,7 +403,7 @@ export default function Makan({ financialData }) {
         {chartData.length > 0 && (
           <section className="glass-panel rounded-xl p-8 hover:shadow-[0_0_30px_rgba(78,222,163,0.08)] transition-shadow duration-300">
             <h3 className="text-headline-sm font-headline-sm text-slate-200 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-400">bar_chart</span>
+              <span className="material-symbols-outlined text-primary">bar_chart</span>
               Grafik Pengeluaran (7 Hari Terakhir)
             </h3>
             <div className="w-full h-80">
@@ -413,7 +425,7 @@ export default function Makan({ financialData }) {
         <section className="glass-panel rounded-xl p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-white/5 gap-4">
             <h3 className="text-headline-sm font-headline-sm text-slate-200 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-400">history</span>
+              <span className="material-symbols-outlined text-primary">history</span>
               Riwayat Makan
             </h3>
             
@@ -424,7 +436,7 @@ export default function Makan({ financialData }) {
                   type="date" 
                   value={filterStartDate}
                   onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner [color-scheme:dark]"
+                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]"
                   title="Dari Tanggal"
                 />
                 <span className="text-slate-500 text-sm">-</span>
@@ -432,7 +444,7 @@ export default function Makan({ financialData }) {
                   type="date" 
                   value={filterEndDate}
                   onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-inner [color-scheme:dark]"
+                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]"
                   title="Sampai Tanggal"
                 />
                 {(filterStartDate || filterEndDate) && (
@@ -471,11 +483,11 @@ export default function Makan({ financialData }) {
                         </div>
                         <div>
                           <div className="text-body-lg text-slate-200 font-semibold">{formatDate(date)}</div>
-                          <div className="text-xs text-slate-400 font-data-mono mt-0.5">Total: Rp {financialData.formatCurrency(dayTotal)} / Rp 30.000</div>
+                          <div className="text-xs text-slate-300 font-data-mono mt-0.5">Total: Rp {financialData.formatCurrency(dayTotal)} / Rp 30.000</div>
                         </div>
                       </div>
                       
-                      <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${isDayOver ? 'bg-error-container/10 border-error/20 text-error' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                      <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${isDayOver ? 'bg-error-container/10 border-error/20 text-error' : 'bg-primary/10 border-primary/20 text-primary'}`}>
                         <span className="material-symbols-outlined text-[14px]">
                           {isDayOver ? 'trending_up' : 'savings'}
                         </span>
@@ -490,19 +502,19 @@ export default function Makan({ financialData }) {
                       {dayTxs.map(tx => (
                         <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl hover:bg-surface-container/40 transition-colors group gap-4">
                           <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${tx.method === 'Saldo' ? 'bg-secondary/10 text-secondary' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${tx.method === 'Saldo' ? 'bg-secondary/10 text-secondary' : 'bg-primary/10 text-primary'}`}>
                               <span className="material-symbols-outlined text-[18px]">
                                 {tx.method === 'Saldo' ? 'account_balance_wallet' : 'payments'}
                               </span>
                             </div>
                             <div>
-                              <div className="text-body-base text-slate-200 group-hover:text-emerald-400 transition-colors flex items-center gap-2">
+                              <div className="text-body-base text-slate-200 group-hover:text-primary transition-colors flex items-center gap-2">
                                 {tx.name}
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase tracking-widest ${tx.method === 'Saldo' ? 'border-secondary/30 text-secondary' : 'border-emerald-500/30 text-emerald-400'}`}>
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase tracking-widest ${tx.method === 'Saldo' ? 'border-secondary/30 text-secondary' : 'border-primary/30 text-primary'}`}>
                                   {tx.method}
                                 </span>
                               </div>
-                              <div className="text-xs text-slate-400 mt-1">{tx.time}</div>
+                              <div className="text-xs text-slate-300 mt-1">{tx.time}</div>
                             </div>
                           </div>
                           

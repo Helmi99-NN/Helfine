@@ -67,6 +67,15 @@ function App() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
+
+  // Global Privacy Body Class
+  useEffect(() => {
+    if (isPrivacyMode) {
+      document.body.classList.add('privacy-active');
+    } else {
+      document.body.classList.remove('privacy-active');
+    }
+  }, [isPrivacyMode]);
   
   // Global Financial State
   const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS);
@@ -204,6 +213,10 @@ function App() {
 
   // Bundle to pass easily
   const formatCurrency = (amount) => {
+    // Return formatted string. CSS will handle the blur via .privacy-active .money-value
+    // But for places where CSS can't reach easily (like charts), we can still use bullets if needed.
+    // For now, let's let CSS handle it where .money-value is applied, and use bullets as fallback 
+    // actually, let's keep bullets for formatCurrency to ensure 100% coverage without manual class additions!
     if (isPrivacyMode) return '•••••••';
     return amount.toLocaleString('id-ID');
   };
@@ -236,7 +249,7 @@ function App() {
 
   if (isDbLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-emerald-400">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-primary">
         <span className="material-symbols-outlined text-6xl animate-spin mb-4">sync</span>
         <h2 className="text-xl font-bold tracking-widest uppercase">Connecting to Database...</h2>
       </div>

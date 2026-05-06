@@ -85,18 +85,18 @@ export default function Login({ onAuthSuccess }) {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden">
       {/* Decorative background blurs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-[100px] pointer-events-none"></div>
       
       <div className="glass-card rounded-3xl p-10 md:p-14 flex flex-col items-center relative z-10 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in duration-500">
         
         {/* Logo/Icon */}
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center border border-emerald-500/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] mb-8">
-          <span className="material-symbols-outlined text-emerald-400 text-4xl">lock</span>
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] mb-8">
+          <span className="material-symbols-outlined text-primary text-4xl">lock</span>
         </div>
         
         <h1 className="font-display-lg text-3xl text-white tracking-tight mb-2">Helfine</h1>
-        <p className="text-slate-400 font-body-base mb-10 text-center">Masukkan PIN rahasia untuk mengakses dashboard finansial Anda.</p>
+        <p className="text-slate-300 font-body-base mb-10 text-center">Masukkan PIN rahasia untuk mengakses dashboard finansial Anda.</p>
         
         {/* PIN Inputs */}
         <div 
@@ -114,7 +114,7 @@ export default function Login({ onAuthSuccess }) {
               value={data}
               onChange={e => handleChange(e.target, index)}
               onKeyDown={e => handleKeyDown(e, index)}
-              className={`w-12 h-14 sm:w-14 sm:h-16 bg-surface-container-lowest/50 border ${error ? 'border-error text-error' : 'border-outline-variant text-emerald-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'} rounded-xl text-center text-2xl font-data-mono font-bold outline-none transition-all shadow-inner`}
+              className={`w-12 h-14 sm:w-14 sm:h-16 bg-surface-container-lowest/50 border ${error ? 'border-error text-error' : 'border-outline-variant text-primary focus:border-primary focus:ring-1 focus:ring-primary'} rounded-xl text-center text-2xl font-data-mono font-bold outline-none transition-all shadow-inner`}
             />
           ))}
         </div>

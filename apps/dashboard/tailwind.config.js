@@ -7,6 +7,8 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
+      /* 
+      // OLD THEME (Green/Teal) - Uncomment to restore
       colors: {
         "on-secondary-fixed-variant": "#2f2ebe",
         "inverse-primary": "#006c49",
@@ -55,6 +57,57 @@ export default {
         "error": "#ffb4ab",
         "on-error": "#690005",
         "surface-container-highest": "#2d3449"
+      },
+      */
+      // CRAFTIFY THEME (Vibrant Purple & Deep Dark Blue)
+      colors: {
+        "primary": "#6234FF",
+        "on-primary": "#FFFFFF",
+        "primary-container": "#4A20D6",
+        "on-primary-container": "#EAE2FF",
+        "primary-fixed": "#B495FF",
+        "on-primary-fixed": "#160060",
+        "primary-fixed-dim": "#8C63FF",
+        "on-primary-fixed-variant": "#4913CC",
+        "secondary": "#9E7BFF",
+        "on-secondary": "#1C0064",
+        "secondary-container": "#2E117D",
+        "on-secondary-container": "#E3D5FF",
+        "secondary-fixed": "#E3D5FF",
+        "on-secondary-fixed": "#1C0064",
+        "secondary-fixed-dim": "#C3ADFF",
+        "on-secondary-fixed-variant": "#4A28B1",
+        "tertiary": "#F060FF",
+        "on-tertiary": "#4B005A",
+        "tertiary-container": "#6D0083",
+        "on-tertiary-container": "#FFD6FF",
+        "tertiary-fixed": "#FFD6FF",
+        "on-tertiary-fixed": "#320042",
+        "tertiary-fixed-dim": "#F788FF",
+        "on-tertiary-fixed-variant": "#8700A1",
+        "error": "#FFB4AB",
+        "on-error": "#690005",
+        "error-container": "#93000A",
+        "on-error-container": "#FFDAD6",
+        "background": "#070415",
+        "on-background": "#F0ECFA",
+        "surface": "#100925",
+        "on-surface": "#F0ECFA",
+        "surface-variant": "#1A103C",
+        "on-surface-variant": "#A9A0C6",
+        "surface-container-lowest": "#04020C",
+        "surface-container-low": "#0A051A",
+        "surface-container": "#110927",
+        "surface-container-high": "#170D33",
+        "surface-container-highest": "#1E1242",
+        "inverse-surface": "#E3E0EE",
+        "inverse-on-surface": "#100925",
+        "inverse-primary": "#B495FF",
+        "outline": "#3D2B75",
+        "outline-variant": "#25174B",
+        "surface-dim": "#070415",
+        "surface-bright": "#2A1956",
+        "surface-tint": "#6234FF"
       },
       borderRadius: {
         "DEFAULT": "0.25rem",

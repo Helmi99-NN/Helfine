@@ -54,19 +54,19 @@ export default function Analytics({ financialData }) {
         {/* Overall Asset Performance (Header Card) - Span 12 */}
         <div className="col-span-12 bg-surface-container/40 backdrop-blur-[20px] border border-outline/20 rounded-xl p-container-padding hover:bg-surface-container/60 transition-all duration-300 relative overflow-hidden group">
           {/* Decorative Glow */}
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary/20 transition-colors duration-500"></div>
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-stack-md">
             <div>
-              <p className="font-label-sm text-label-sm text-slate-400 uppercase tracking-wider mb-2">Total Aset Bulan Ini</p>
+              <p className="font-label-sm text-label-sm text-slate-300 uppercase tracking-wider mb-2">Total Aset Bulan Ini</p>
               <h3 className="font-display-lg text-display-lg text-slate-200 flex items-baseline gap-2">
-                <span className="text-3xl text-slate-400 font-light">Rp</span>
+                <span className="text-3xl text-slate-300 font-light">Rp</span>
                 {financialData.formatCurrency(totalAssets)}
               </h3>
             </div>
-            <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full backdrop-blur-md">
-              <span className="material-symbols-outlined text-emerald-400 text-sm">trending_up</span>
-              <span className="font-data-mono text-data-mono text-emerald-400">Naik Rp 138.000.000 vs Bulan Lalu (+12.4%)</span>
+            <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full backdrop-blur-md">
+              <span className="material-symbols-outlined text-primary text-sm">trending_up</span>
+              <span className="font-data-mono text-data-mono text-primary">Naik Rp 138.000.000 vs Bulan Lalu (+12.4%)</span>
             </div>
           </div>
         </div>
@@ -100,14 +100,14 @@ export default function Analytics({ financialData }) {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-400">Belum ada data</div>
+              <div className="w-full h-full flex items-center justify-center text-slate-300">Belum ada data</div>
             )}
             
             {/* Center Label */}
             {compositionData.length > 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="font-label-sm text-label-sm text-slate-400">Total</span>
-                <span className="font-data-mono text-data-mono text-emerald-400 text-lg">{totalAssets > 0 ? '100%' : '0%'}</span>
+                <span className="font-label-sm text-label-sm text-slate-300">Total</span>
+                <span className="font-data-mono text-data-mono text-primary text-lg">{totalAssets > 0 ? '100%' : '0%'}</span>
               </div>
             )}
           </div>
@@ -141,7 +141,7 @@ export default function Analytics({ financialData }) {
                   className={`px-3 py-1 text-label-sm font-label-sm transition-colors rounded ${
                     timeframe === tf 
                       ? 'bg-surface-variant/80 text-slate-200 shadow-sm border border-outline/20' 
-                      : 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-300 hover:text-slate-200'
                   }`}
                 >
                   {tf}
@@ -193,21 +193,41 @@ export default function Analytics({ financialData }) {
             <h4 className="font-headline-md text-headline-md text-slate-200">Wawasan Analitik AI</h4>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {/* Insight 1 */}
-            <div className="bg-slate-800/30 border border-outline/10 p-4 rounded-lg border-l-4 border-l-secondary flex flex-col justify-between">
-              <p className="font-body-base text-body-base text-slate-400 mb-4">Pengeluaran makan harian terjaga dengan baik di bawah batas Rp 30.000.</p>
-              <p className="font-data-mono text-data-mono text-slate-200 text-lg">Rp 28.500 <span className="text-emerald-400 text-sm font-label-sm ml-2">↓ Hemat</span></p>
-            </div>
+            {/* Insight 1: Rule-Based Alert for Makan */}
+            {(() => {
+              const makanWallet = financialData.operationalWallets?.find(w => w.id === 'makan');
+              const makanSpent = makanWallet ? makanWallet.value : 0;
+              const makanLimit = 900000; // Asumsi 30k x 30 hari
+              const percentage = (makanSpent / makanLimit) * 100;
+              
+              if (percentage >= 80) {
+                return (
+                  <div className="bg-slate-800/30 border border-outline/10 p-4 rounded-lg border-l-4 border-l-red-500 flex flex-col justify-between">
+                    <p className="font-body-base text-body-base text-slate-300 mb-4">
+                      ⚠️ Pengeluaran Makan Anda mencapai <span className="text-red-400 font-bold">{percentage.toFixed(0)}%</span> dari batas wajar bulan ini.
+                    </p>
+                    <p className="font-data-mono text-data-mono text-slate-200 text-lg">Rp {financialData.formatCurrency(makanSpent)} <span className="text-red-500 text-sm font-label-sm ml-2">Overbudget Warning</span></p>
+                  </div>
+                );
+              } else {
+                return (
+                  <div className="bg-slate-800/30 border border-outline/10 p-4 rounded-lg border-l-4 border-l-secondary flex flex-col justify-between">
+                    <p className="font-body-base text-body-base text-slate-300 mb-4">Pengeluaran makan bulanan terjaga dengan baik di bawah batas Rp 900.000.</p>
+                    <p className="font-data-mono text-data-mono text-slate-200 text-lg">Rp {financialData.formatCurrency(makanSpent)} <span className="text-primary text-sm font-label-sm ml-2">↓ Aman</span></p>
+                  </div>
+                );
+              }
+            })()}
             
             {/* Insight 2 */}
             <div className="bg-slate-800/30 border border-outline/10 p-4 rounded-lg border-l-4 border-l-primary flex flex-col justify-between">
-              <p className="font-body-base text-body-base text-slate-400 mb-4">Portofolio saham mencatatkan kenaikan tertinggi bulan ini.</p>
-              <p className="font-data-mono text-data-mono text-slate-200 text-lg">+ 8.2% <span className="text-slate-400 text-sm font-label-sm ml-2">Pertumbuhan Positif</span></p>
+              <p className="font-body-base text-body-base text-slate-300 mb-4">Portofolio saham mencatatkan kenaikan tertinggi bulan ini.</p>
+              <p className="font-data-mono text-data-mono text-slate-200 text-lg">+ 8.2% <span className="text-slate-300 text-sm font-label-sm ml-2">Pertumbuhan Positif</span></p>
             </div>
             
             {/* Insight 3 */}
             <div className="bg-slate-800/30 border border-outline/10 p-4 rounded-lg border-l-4 border-l-tertiary flex flex-col justify-between">
-              <p className="font-body-base text-body-base text-slate-400 mb-4">Peringatan likuiditas modal operasional. Disarankan untuk menambah buffer dompet harian.</p>
+              <p className="font-body-base text-body-base text-slate-300 mb-4">Peringatan likuiditas modal operasional. Disarankan untuk menambah buffer dompet harian.</p>
               <p className="font-data-mono text-data-mono text-tertiary text-lg">Butuh Tindakan <span className="material-symbols-outlined text-sm align-middle ml-1">warning</span></p>
             </div>
           </div>
