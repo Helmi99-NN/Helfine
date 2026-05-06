@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivacyMode, onMenuClick, onLogout }) {
+export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivacyMode, isLightMode, setIsLightMode, onMenuClick, onLogout, onLogoClick }) {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const headerRef = useRef(null);
 
@@ -22,7 +22,7 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
     <header ref={headerRef} className="fixed top-0 right-0 left-0 md:left-64 h-16 flex items-center justify-between px-8 z-50 bg-slate-900/40 backdrop-blur-md docked full-width border-b border-white/10 shadow-sm font-['Plus_Jakarta_Sans'] tracking-tight text-primary transition-colors duration-300">
       {/* Brand / Title Area */}
       <div className="flex items-center gap-4">
-        <span className="text-2xl font-black text-primary italic font-['Plus_Jakarta_Sans'] tracking-tight md:hidden">HELFINE</span>
+        <button onClick={onLogoClick} className="text-2xl font-black text-primary italic font-['Plus_Jakarta_Sans'] tracking-tight md:hidden focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg px-1">HELFINE</button>
         <h2 className="hidden md:block font-headline-md text-headline-md text-slate-200">{title}</h2>
       </div>
       {/* Search */}
@@ -86,6 +86,17 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
         >
           <span className="material-symbols-outlined">
             {isPrivacyMode ? 'visibility_off' : 'visibility'}
+          </span>
+        </button>
+
+        {/* Theme Toggle */}
+        <button 
+          onClick={() => setIsLightMode?.(!isLightMode)}
+          className={`p-2 text-slate-300 hover:bg-white/5 hover:text-primary transition-all duration-200 rounded-full scale-95 active:scale-90 hidden sm:block`} 
+          title={isLightMode ? "Ganti ke Mode Gelap" : "Ganti ke Mode Terang"}
+        >
+          <span className="material-symbols-outlined">
+            {isLightMode ? 'dark_mode' : 'light_mode'}
           </span>
         </button>
 

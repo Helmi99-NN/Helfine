@@ -14,17 +14,25 @@ export default function Trading({ financialData }) {
   const [lot, setLot] = useState('');
   const [buy, setBuy] = useState('');
   const [sell, setSell] = useState('');
+  const [target, setTarget] = useState('');
+  const [stopLoss, setStopLoss] = useState('');
+  const [emotion, setEmotion] = useState('Disiplin');
   const [sekuritas, setSekuritas] = useState('Stockbit');
+
+  const [editingTradeId, setEditingTradeId] = useState(null);
+  const [editSellPrice, setEditSellPrice] = useState('');
 
   const codeRef = useRef(null);
   const lotRef = useRef(null);
   const buyRef = useRef(null);
+  const targetRef = useRef(null);
+  const stopLossRef = useRef(null);
   const sellRef = useRef(null);
 
   const formatNumber = (num) => financialData.formatCurrency(Math.round(num));
 
   const handleAddTrade = () => {
-    if (!code || !lot || !buy || !sell) return;
+    if (!code || !lot || !buy) return;
     
     const newTrade = {
       id: Date.now(),
@@ -32,7 +40,10 @@ export default function Trading({ financialData }) {
       code: code.toUpperCase(),
       lot: parseInt(lot, 10),
       buy: parseFloat(buy),
-      sell: parseFloat(sell),
+      sell: sell ? parseFloat(sell) : 0,
+      target: target ? parseFloat(target) : 0,
+      stopLoss: stopLoss ? parseFloat(stopLoss) : 0,
+      emotion,
       sekuritas
     };
 
@@ -45,8 +56,22 @@ export default function Trading({ financialData }) {
     setCode('');
     setLot('');
     setBuy('');
+    setTarget('');
+    setStopLoss('');
     setSell('');
+    setEmotion('Disiplin');
     codeRef.current?.focus();
+  };
+
+  const handleSaveSellPrice = (id) => {
+    const newSell = parseFloat(editSellPrice);
+    if (!newSell) return;
+    const newTxs = trades.map(t => t.id === id ? { ...t, sell: newSell } : t);
+    setTrades(newTxs);
+    localStorage.setItem('trading_journal', JSON.stringify(newTxs));
+    financialData.syncSheet && financialData.syncSheet('Trading', newTxs).catch(console.error);
+    setEditingTradeId(null);
+    setEditSellPrice('');
   };
 
   const handleDeleteTrade = (id) => {
@@ -63,14 +88,17 @@ export default function Trading({ financialData }) {
 
   const enrichedTrades = trades.map(t => {
     const totalBuy = t.lot * 100 * t.buy;
-    const result = (t.sell - t.buy) * t.lot * 100;
-    const percentage = ((t.sell - t.buy) / t.buy) * 100;
+    const isOpen = !t.sell || t.sell === 0;
+    const result = isOpen ? 0 : (t.sell - t.buy) * t.lot * 100;
+    const percentage = isOpen ? 0 : ((t.sell - t.buy) / t.buy) * 100;
     
-    totalProfitLoss += result;
-    if (result > 0) winCount++;
-    else if (result < 0) lossCount++;
+    if (!isOpen) {
+      totalProfitLoss += result;
+      if (result > 0) winCount++;
+      else if (result < 0) lossCount++;
+    }
 
-    return { ...t, totalBuy, result, percentage };
+    return { ...t, totalBuy, result, percentage, isOpen };
   });
 
   // Sort by date descending
@@ -78,6 +106,17 @@ export default function Trading({ financialData }) {
 
   const totalTrades = winCount + lossCount;
   const winRate = totalTrades > 0 ? (winCount / totalTrades) * 100 : 0;
+
+  // Emotion Engine
+  const lossEmotions = enrichedTrades.filter(t => !t.isOpen && t.result < 0 && t.emotion).map(t => t.emotion);
+  let dominantLossEmotion = null;
+  if (lossEmotions.length > 0) {
+    const counts = lossEmotions.reduce((acc, curr) => {
+      acc[curr] = (acc[curr] || 0) + 1;
+      return acc;
+    }, {});
+    dominantLossEmotion = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+  }
 
   const handleEnter = (e, nextRef) => {
     if (e.key === 'Enter') {
@@ -97,6 +136,19 @@ export default function Trading({ financialData }) {
           </h2>
           <p className="text-slate-300 mt-2 font-body-base text-body-base">Catat dan evaluasi performa trading Anda secara sistematis.</p>
         </div>
+
+        {/* Evaluasi Emosional Insight */}
+        {dominantLossEmotion && (
+          <div className="bg-error/10 border border-error/20 rounded-xl p-4 flex items-start gap-4">
+            <span className="material-symbols-outlined text-error text-3xl shrink-0">psychology_alt</span>
+            <div>
+              <h3 className="text-sm font-bold text-error mb-1">Evaluasi Emosional</h3>
+              <p className="text-sm text-error/80">
+                Sistem mendeteksi Anda paling sering mengalami <strong>Loss</strong> saat bertrading dengan emosi <strong className="uppercase bg-error/20 px-1.5 py-0.5 rounded">{dominantLossEmotion}</strong>. Cobalah untuk lebih tenang dan ikuti Trading Plan Anda!
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -220,6 +272,48 @@ export default function Trading({ financialData }) {
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Target (Opsional)</label>
+                  <input 
+                    ref={targetRef}
+                    type="number" 
+                    value={target} 
+                    onChange={(e) => setTarget(e.target.value)}
+                    onKeyDown={(e) => handleEnter(e, stopLossRef)}
+                    placeholder="0" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Stop Loss (Opsional)</label>
+                  <input 
+                    ref={stopLossRef}
+                    type="number" 
+                    value={stopLoss} 
+                    onChange={(e) => setStopLoss(e.target.value)}
+                    onKeyDown={(e) => handleEnter(e, sellRef)}
+                    placeholder="0" 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Emosi Saat Entry</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {['Disiplin', 'FOMO', 'Balas Dendam', 'Panik'].map(emo => (
+                    <button 
+                      key={emo}
+                      onClick={() => setEmotion(emo)}
+                      className={`py-2 rounded-lg text-xs font-semibold border transition-all ${emotion === emo ? 'bg-primary/20 border-primary text-primary' : 'bg-surface-container-lowest/50 border-outline-variant/50 text-slate-500 hover:text-slate-300'}`}
+                    >
+                      {emo}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Live Calculator */}
@@ -227,12 +321,18 @@ export default function Trading({ financialData }) {
               const calcLot = parseInt(lot, 10) || 0;
               const calcBuy = parseFloat(buy) || 0;
               const calcSell = parseFloat(sell) || 0;
+              const calcTarget = parseFloat(target) || 0;
+              const calcStopLoss = parseFloat(stopLoss) || 0;
               
               const totalBuy = calcLot * 100 * calcBuy;
               const totalSell = calcLot * 100 * calcSell;
               const profitLoss = totalSell - totalBuy;
               const percentage = calcBuy > 0 ? ((calcSell - calcBuy) / calcBuy) * 100 : 0;
               const isProfit = profitLoss >= 0;
+
+              const reward = calcTarget > calcBuy ? calcTarget - calcBuy : 0;
+              const risk = calcBuy > calcStopLoss ? calcBuy - calcStopLoss : 0;
+              const rrRatio = (risk > 0 && reward > 0) ? (reward / risk).toFixed(1) : 0;
 
               if (calcLot > 0 && calcBuy > 0) {
                 return (
@@ -254,6 +354,12 @@ export default function Trading({ financialData }) {
                         </div>
                       </div>
                     )}
+                    {rrRatio > 0 && (
+                      <div className="flex justify-between items-center pt-3 mt-1 border-t border-white/5">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider">Risk / Reward Ratio:</span>
+                        <span className="text-sm font-data-mono font-bold text-slate-200">1 : {rrRatio}</span>
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -262,8 +368,8 @@ export default function Trading({ financialData }) {
 
             <button 
               onClick={handleAddTrade} 
-              disabled={!code || !lot || !buy || !sell}
-              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${(!code || !lot || !buy || !sell) ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-on-primary hover:bg-primary-fixed'}`}
+              disabled={!code || !lot || !buy}
+              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${(!code || !lot || !buy) ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-on-primary hover:bg-primary-fixed'}`}
             >
               <span className="material-symbols-outlined text-sm">save</span>
               Simpan Trade
@@ -313,19 +419,65 @@ export default function Trading({ financialData }) {
                           <td className="p-4 text-slate-200 whitespace-nowrap">{new Date(trade.date).toLocaleDateString('id-ID')}</td>
                           <td className="p-4">
                             <div className="font-bold text-slate-200">{trade.code}</div>
-                            <div className={`text-[9px] px-1.5 py-0.5 mt-1 rounded border uppercase tracking-widest inline-block ${trade.sekuritas === 'KB Valburi' ? 'border-secondary/30 text-secondary' : 'border-primary/30 text-primary'}`}>
-                              {trade.sekuritas || 'Stockbit'}
+                            <div className="flex gap-1 mt-1">
+                              <div className={`text-[9px] px-1.5 py-0.5 rounded border uppercase tracking-widest inline-block ${trade.sekuritas === 'KB Valburi' ? 'border-secondary/30 text-secondary' : 'border-primary/30 text-primary'}`}>
+                                {trade.sekuritas || 'Stockbit'}
+                              </div>
+                              {trade.emotion && (
+                                <div className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant text-slate-400 uppercase tracking-widest inline-block">
+                                  {trade.emotion}
+                                </div>
+                              )}
                             </div>
                           </td>
                           <td className="p-4 text-right text-slate-200 font-data-mono">{trade.lot}</td>
-                          <td className="p-4 text-right text-slate-200 font-data-mono">Rp {formatNumber(trade.buy)}</td>
-                          <td className="p-4 text-right text-slate-500 font-data-mono">Rp {formatNumber(trade.totalBuy)}</td>
-                          <td className="p-4 text-right text-slate-200 font-data-mono">Rp {formatNumber(trade.sell)}</td>
-                          <td className={`p-4 text-right font-data-mono font-semibold ${isProfit ? 'bg-primary/20 text-primary border-l-4 border-primary' : 'bg-error/20 text-error border-l-4 border-error'}`}>
-                            {isProfit ? '+' : ''}{trade.percentage.toFixed(2)}%
+                          <td className="p-4 text-right">
+                            <div className="text-slate-200 font-data-mono">Rp {formatNumber(trade.buy)}</div>
+                            {(trade.target || trade.stopLoss) ? (
+                              <div className="text-[10px] text-slate-500 font-data-mono mt-1">
+                                {trade.target ? `T: ${formatNumber(trade.target)}` : ''} {trade.stopLoss ? `SL: ${formatNumber(trade.stopLoss)}` : ''}
+                                {trade.target > trade.buy && trade.buy > trade.stopLoss && (
+                                  <span className="ml-1 text-primary">({( (trade.target - trade.buy) / (trade.buy - trade.stopLoss) ).toFixed(1)}R)</span>
+                                )}
+                              </div>
+                            ) : null}
                           </td>
-                          <td className={`p-4 text-right font-data-mono font-semibold ${isProfit ? 'bg-primary/20 text-primary' : 'bg-error/20 text-error'}`}>
-                            {isProfit ? '+' : ''}Rp {formatNumber(trade.result)}
+                          <td className="p-4 text-right text-slate-500 font-data-mono">Rp {formatNumber(trade.totalBuy)}</td>
+                          <td className="p-4 text-right text-slate-200 font-data-mono">
+                            {trade.isOpen ? (
+                              editingTradeId === trade.id ? (
+                                <div className="flex items-center gap-2 justify-end">
+                                  <input 
+                                    type="number" 
+                                    value={editSellPrice} 
+                                    onChange={(e) => setEditSellPrice(e.target.value)}
+                                    placeholder="Jual..."
+                                    className="w-20 bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-primary"
+                                  />
+                                  <button onClick={() => handleSaveSellPrice(trade.id)} className="text-primary hover:text-primary-fixed">
+                                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                                  </button>
+                                  <button onClick={() => setEditingTradeId(null)} className="text-error hover:text-error-container">
+                                    <span className="material-symbols-outlined text-sm">cancel</span>
+                                  </button>
+                                </div>
+                              ) : (
+                                <button 
+                                  onClick={() => setEditingTradeId(trade.id)}
+                                  className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded hover:bg-primary/20 transition-colors"
+                                >
+                                  Open
+                                </button>
+                              )
+                            ) : (
+                              `Rp ${formatNumber(trade.sell)}`
+                            )}
+                          </td>
+                          <td className={`p-4 text-right font-data-mono font-semibold ${trade.isOpen ? 'text-slate-500' : isProfit ? 'bg-primary/20 text-primary border-l-4 border-primary' : 'bg-error/20 text-error border-l-4 border-error'}`}>
+                            {trade.isOpen ? '-' : `${isProfit ? '+' : ''}${trade.percentage.toFixed(2)}%`}
+                          </td>
+                          <td className={`p-4 text-right font-data-mono font-semibold ${trade.isOpen ? 'text-slate-500' : isProfit ? 'bg-primary/20 text-primary' : 'bg-error/20 text-error'}`}>
+                            {trade.isOpen ? 'Running' : `${isProfit ? '+' : ''}Rp ${formatNumber(trade.result)}`}
                           </td>
                           <td className="p-4 text-center">
                             <button 

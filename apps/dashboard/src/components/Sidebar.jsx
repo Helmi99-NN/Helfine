@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Sidebar({ activeTab, setActiveTab, financialData, isOpen, onClose }) {
+export default function Sidebar({ activeTab, setActiveTab, financialData, isOpen, onClose, isLightMode, setIsLightMode, isPrivacyMode, setIsPrivacyMode }) {
   const handleLogout = () => {
     sessionStorage.removeItem('helfine_auth');
     if (financialData?.setIsAuthenticated) {
@@ -80,6 +80,24 @@ export default function Sidebar({ activeTab, setActiveTab, financialData, isOpen
 
         
         <div className="border-t border-white/5 pt-4 flex flex-col gap-2">
+          {/* Mobile Only Toggles */}
+          <div className="md:hidden flex gap-2 px-2 pb-2">
+            <button 
+              onClick={() => setIsLightMode?.(!isLightMode)}
+              className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-surface-container border border-outline-variant text-slate-300 hover:text-primary transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">{isLightMode ? 'dark_mode' : 'light_mode'}</span>
+              <span className="text-xs font-semibold">{isLightMode ? 'Gelap' : 'Terang'}</span>
+            </button>
+            <button 
+              onClick={() => setIsPrivacyMode?.(!isPrivacyMode)}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border transition-colors ${isPrivacyMode ? 'bg-primary/20 border-primary/50 text-primary' : 'bg-surface-container border-outline-variant text-slate-300 hover:text-primary'}`}
+            >
+              <span className="material-symbols-outlined text-[18px]">{isPrivacyMode ? 'visibility_off' : 'visibility'}</span>
+              <span className="text-xs font-semibold">{isPrivacyMode ? 'Tampil' : 'Sembunyi'}</span>
+            </button>
+          </div>
+
           <a href="#" className="text-slate-300 flex items-center gap-3 px-2 py-2 hover:text-slate-200 transition-colors">
             <span className="material-symbols-outlined text-[18px]">help</span>
             Bantuan

@@ -33,6 +33,152 @@
     }
 }
 
+/* ----------------------------------- */
+/* SAFE LIGHT MODE OVERRIDES           */
+/* ----------------------------------- */
+
+/* Base overrides */
+body.light-mode {
+  background-color: #f1f5f9 !important; /* slate-100 */
+  color: #0f172a !important; /* slate-900 */
+}
+
+/* Glass Panels override */
+body.light-mode .glass-card,
+body.light-mode .glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%) !important;
+  border-color: rgba(98, 52, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-mode .glass-card::before {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%) !important;
+}
+
+/* Background utilities override */
+body.light-mode .bg-background,
+body.light-mode .bg-slate-900,
+body.light-mode .bg-slate-800,
+body.light-mode .bg-slate-800est,
+body.light-mode .bg-slate-950,
+body.light-mode .bg-surface-container,
+body.light-mode .bg-surface-container-low,
+body.light-mode .bg-surface-container-lowest,
+body.light-mode .bg-surface {
+  background-color: #f1f5f9 !important;
+}
+
+/* Panels with opacity / gradients */
+body.light-mode .bg-slate-950\/95,
+body.light-mode .bg-slate-900\/40,
+body.light-mode .bg-slate-900\/50,
+body.light-mode .bg-slate-800\/30,
+body.light-mode .bg-surface-container\/50,
+body.light-mode .bg-surface-container\/40,
+body.light-mode .bg-surface-container-lowest\/50,
+body.light-mode .bg-surface-container-lowest\/30,
+body.light-mode .bg-surface-container\/30,
+body.light-mode .bg-surface-container\/20,
+body.light-mode .bg-white\/5,
+body.light-mode .bg-white\/10 {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%) !important;
+}
+
+/* Inner elements / Buttons / Specific Backgrounds */
+body.light-mode .bg-slate-800\/50,
+body.light-mode .bg-slate-800\/40,
+body.light-mode .bg-slate-800\/20 {
+  background: #f8fafc !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .bg-surface-variant,
+body.light-mode .bg-surface-variant\/80 {
+  background-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+/* Table Resume Arbitrary Classes */
+body.light-mode .bg-\[\#0b1326\],
+body.light-mode .bg-\[\#131b2e\] {
+  background-color: #f1f5f9 !important;
+}
+body.light-mode .bg-\[\#063321\] {
+  background-color: #dcfce7 !important;
+}
+body.light-mode .bg-\[\#422006\] {
+  background-color: #fef08a !important;
+}
+
+/* Text utilities override */
+body.light-mode .text-slate-200,
+body.light-mode .text-slate-300,
+body.light-mode .text-white {
+  color: #1e293b !important; /* slate-800 */
+}
+
+body.light-mode .text-slate-400,
+body.light-mode .text-slate-500 {
+  color: #64748b !important; /* slate-500 */
+}
+
+body.light-mode .text-error {
+  color: #dc2626 !important; /* darker red for legibility */
+}
+
+body.light-mode .text-\[\#FDE047\] {
+  color: #d97706 !important; /* dark amber instead of light yellow */
+}
+
+/* Border utilities override */
+body.light-mode .border-white\/5,
+body.light-mode .border-white\/10,
+body.light-mode .border-outline-variant,
+body.light-mode .border-outline-variant\/50,
+body.light-mode .border-outline-variant\/30,
+body.light-mode .border-outline-variant\/20,
+body.light-mode .border-outline-variant\/10 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
+body.light-mode .divide-outline-variant\/10 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Sidebar Specific */
+body.light-mode .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .hover\:text-white:hover {
+  color: #0f172a !important;
+}
+
+/* Input Fields */
+body.light-mode input[type="text"],
+body.light-mode input[type="number"],
+body.light-mode input[type="date"],
+body.light-mode select {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-mode input:focus,
+body.light-mode select:focus {
+  border-color: #6234FF !important; /* primary */
+}
+
+/* Recharts overrides (if any charts are rendered) */
+body.light-mode .recharts-text {
+  fill: #64748b !important;
+}
+body.light-mode .recharts-cartesian-grid-horizontal line,
+body.light-mode .recharts-cartesian-grid-vertical line {
+  stroke: rgba(0,0,0,0.05) !important;
+}
+
 /* Privacy Mode */
 .privacy-active .money-value, 
 .privacy-active .recharts-text, 
