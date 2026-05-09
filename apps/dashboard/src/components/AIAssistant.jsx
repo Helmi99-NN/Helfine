@@ -174,7 +174,7 @@ Asisten:`;
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-gradient-to-tr from-primary to-[#8A5CF6] rounded-full shadow-[0_0_20px_rgba(78,222,163,0.4)] flex items-center justify-center text-white hover:scale-110 transition-transform duration-300"
+        className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] w-14 h-14 bg-gradient-to-tr from-primary to-[#8A5CF6] rounded-full shadow-[0_0_20px_rgba(78,222,163,0.4)] flex items-center justify-center text-white hover:scale-110 transition-transform duration-300"
         title="Tanya Asisten AI"
       >
         <span className="material-symbols-outlined text-3xl">smart_toy</span>
@@ -184,7 +184,7 @@ Asisten:`;
 
   // Render chat window
   return (
-    <div className="fixed bottom-6 right-6 z-[100] w-[360px] md:w-[400px] h-[600px] max-h-[80vh] flex flex-col bg-surface-container/95 backdrop-blur-3xl border border-outline-variant/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden font-['Plus_Jakarta_Sans']">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] w-[calc(100vw-32px)] sm:w-[360px] md:w-[400px] h-[600px] max-h-[85dvh] flex flex-col bg-surface-container/95 backdrop-blur-3xl border border-outline-variant/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden font-['Plus_Jakarta_Sans']">
       
       {/* Header */}
       <div className="p-4 bg-surface-container-high/50 border-b border-white/5 flex items-center justify-between">
