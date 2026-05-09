@@ -25,18 +25,30 @@ export default function Strategy({ financialData }) {
     ));
   };
 
-  const handleToggleStatus = (id) => {
-    setOperationalWallets && setOperationalWallets(operationalWallets.map(w => {
-      if (w.id === id) {
-        const currentStatus = w.status || 'filled'; // default to filled since they have values initially
-        let nextStatus = 'empty';
-        if (currentStatus === 'empty') nextStatus = 'filled';
-        else if (currentStatus === 'filled') nextStatus = 'used';
-        else if (currentStatus === 'used') nextStatus = 'empty';
-        return { ...w, status: nextStatus };
-      }
-      return w;
-    }));
+  // Read cashflow records to automate status
+  const [cashflowRecords] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cashflow_records');
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return [];
+  });
+
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const currentMonthCashflow = cashflowRecords.filter(r => {
+    const d = new Date(r.date);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  const getAutomatedStatus = (walletName) => {
+    const nameLower = walletName.toLowerCase();
+    const hasExpense = currentMonthCashflow.some(r => r.type === 'Expense' && r.category.toLowerCase().includes(nameLower));
+    const hasIncome = currentMonthCashflow.some(r => r.type === 'Income' && r.category.toLowerCase().includes(nameLower));
+
+    if (hasExpense) return 'used';
+    if (hasIncome) return 'filled';
+    return 'empty';
   };
 
   const getToggleVisuals = (status) => {
@@ -103,25 +115,28 @@ export default function Strategy({ financialData }) {
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 flex-1 content-start">
               {operationalWallets && operationalWallets.map((wallet) => {
-                const { containerClass, circleClass, label } = getToggleVisuals(wallet.status);
+                const automatedStatus = getAutomatedStatus(wallet.name);
+                const { containerClass, circleClass, label } = getToggleVisuals(automatedStatus);
                 
                 return (
-                  <div key={wallet.id} className="bg-surface-container/50 border border-white/10 rounded-lg p-4 flex flex-col gap-3 transition-colors group hover:border-primary/50">
+                  <div key={wallet.id} className="bg-surface-container/50 border border-white/10 rounded-lg p-4 flex flex-col gap-3 transition-colors group hover:border-primary/50 relative overflow-hidden">
+                    {/* Visual indicator for automated sync */}
+                    <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    
                     <div className="flex justify-between items-start">
                       <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-white/5 group-hover:bg-primary/10">
                         <span className="material-symbols-outlined text-lg text-primary/80 group-hover:text-primary transition-colors">{wallet.icon}</span>
                       </div>
                       
-                      {/* 3-State Toggle */}
+                      {/* 3-State Automated Indicator */}
                       <div className="flex flex-col items-end gap-1">
                         <div 
-                          onClick={() => handleToggleStatus(wallet.id)}
-                          className={`w-10 h-4 rounded-full flex items-center p-0.5 relative border cursor-pointer transition-colors duration-300 ${containerClass}`}
-                          title={label}
+                          className={`w-10 h-4 rounded-full flex items-center p-0.5 relative border transition-colors duration-300 opacity-90 ${containerClass}`}
+                          title={`${label} (Otomatis dari Arus Kas)`}
                         >
                           <div className={`w-3 h-3 rounded-full absolute transition-all duration-300 shadow-sm ${circleClass}`}></div>
                         </div>
-                        <span className="text-[9px] text-slate-300 font-data-mono uppercase tracking-wider">{label}</span>
+                        <span className="text-[9px] text-slate-400 font-data-mono uppercase tracking-wider">{label}</span>
                       </div>
                     </div>
                     <div>

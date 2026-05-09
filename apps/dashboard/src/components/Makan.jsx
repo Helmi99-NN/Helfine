@@ -54,6 +54,7 @@ export default function Makan({ financialData }) {
   const [foodMethod, setFoodMethod] = useState('Cash');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+  const [chartRange, setChartRange] = useState(7);
   
   const [baseCash, setBaseCash] = useState(0);
   const baseSaldo = monthlyFoodBudget - baseCash;
@@ -158,6 +159,12 @@ export default function Makan({ financialData }) {
     return new Date(dateString).toLocaleDateString('id-ID', options);
   };
 
+  const formatShortDate = (dateString) => {
+    if (dateString === todayStr) return 'Hari Ini';
+    if (dateString === yesterdayStr) return 'Kemarin';
+    return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  };
+
   // Apply Filter
   const filteredTransactions = foodTransactions.filter(tx => {
     if (filterStartDate && filterEndDate) {
@@ -179,12 +186,13 @@ export default function Makan({ financialData }) {
 
   const sortedDates = Object.keys(groupedTransactions).sort((a, b) => new Date(b) - new Date(a));
 
-  // Chart Data preparation (Last 7 days of transactions)
-  const chartData = sortedDates.slice(0, 7).reverse().map(date => {
+  // Chart Data preparation
+  const chartData = sortedDates.slice(0, chartRange).reverse().map(date => {
     const dayTxs = groupedTransactions[date];
     const dayTotal = dayTxs.reduce((sum, tx) => sum + tx.amount, 0);
     return {
       date: formatDate(date),
+      shortDate: formatShortDate(date),
       pengeluaran: dayTotal,
       budget: dailyFoodBudget
     };
@@ -194,7 +202,7 @@ export default function Makan({ financialData }) {
     if (active && payload && payload.length) {
       return (
         <div className="glass-card p-3 rounded-lg border border-white/10 shadow-lg bg-surface/90 backdrop-blur-md">
-          <p className="text-slate-300 text-xs mb-1">{label}</p>
+          <p className="text-slate-300 text-xs mb-1">{payload[0].payload.date || label}</p>
           <p className="text-primary font-bold">
             Rp {financialData.formatCurrency(payload[0].value)}
           </p>
@@ -264,19 +272,19 @@ export default function Makan({ financialData }) {
               <div className="mt-8">
                 <div className={`border p-4 rounded-xl flex items-center justify-between ${isNetHemat ? 'bg-primary/10 border-primary/20' : 'bg-error-container/10 border-error/20'}`}>
                   <div>
-                    <div className={`flex items-center gap-2 mb-1 ${isNetHemat ? 'text-primary' : 'text-error'}`}>
+                    <div className={`flex items-center gap-2 mb-1 ${isNetHemat ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>
                       <span className="material-symbols-outlined text-sm">
                         {isNetHemat ? 'savings' : 'trending_up'}
                       </span>
-                      <span className="text-xs font-bold uppercase tracking-wider">
+                      <span className="text-xs font-bold uppercase tracking-wider drop-shadow-sm">
                         {isNetHemat ? 'TOTAL HEMAT' : 'TOTAL LEBIH'}
                       </span>
                     </div>
-                    <div className={`text-[10px] uppercase tracking-wider ${isNetHemat ? 'text-primary/70' : 'text-error/70'}`}>
+                    <div className={`text-[10px] font-bold uppercase tracking-wider ${isNetHemat ? 'text-[#10b981]/90' : 'text-[#ef4444]/90'}`}>
                       SEJAK {periodStartLabel}
                     </div>
                   </div>
-                  <div className={`text-xl sm:text-2xl md:text-3xl font-bold font-data-mono tracking-tight ${isNetHemat ? 'text-primary' : 'text-error'}`}>
+                  <div className={`text-xl sm:text-2xl md:text-3xl font-bold font-data-mono tracking-tight drop-shadow-sm ${isNetHemat ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>
                     {isNetHemat ? '+' : '-'}Rp {financialData.formatCurrency(absNetSavings)}
                   </div>
                 </div>
@@ -343,13 +351,14 @@ export default function Makan({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Tanggal</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">calendar_today</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm pointer-events-none">calendar_today</span>
                   <input 
                     type="date" 
                     value={foodDate} 
                     onChange={(e) => setFoodDate(e.target.value)} 
                     onKeyDown={handleDateKeyDown}
-                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]" 
+                    onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark] cursor-pointer" 
                   />
                 </div>
               </div>
@@ -402,15 +411,41 @@ export default function Makan({ financialData }) {
         {/* Chart Section */}
         {chartData.length > 0 && (
           <section className="glass-panel rounded-xl p-8 hover:shadow-[0_0_30px_rgba(78,222,163,0.08)] transition-shadow duration-300">
-            <h3 className="text-headline-sm font-headline-sm text-slate-200 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">bar_chart</span>
-              Grafik Pengeluaran (7 Hari Terakhir)
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              <h3 className="text-headline-sm font-headline-sm text-slate-200 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">bar_chart</span>
+                Grafik Pengeluaran ({chartRange === 7 ? '1 Minggu' : chartRange === 14 ? '2 Minggu' : '1 Bulan'} Terakhir)
+              </h3>
+              
+              <div className="flex items-center gap-1 bg-surface-container-lowest/50 p-1 rounded-lg border border-white/5">
+                {[
+                  { value: 7, label: '1 Minggu' },
+                  { value: 14, label: '2 Minggu' },
+                  { value: 30, label: '1 Bulan' }
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setChartRange(option.value)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${chartRange === option.value ? 'bg-primary text-on-primary shadow-[0_0_10px_rgba(78,222,163,0.2)]' : 'text-slate-400 hover:text-slate-200 hover:bg-surface-container/50'}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="w-full h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} dy={10} />
+                  <XAxis 
+                    dataKey="shortDate" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, angle: -45, textAnchor: 'end' }} 
+                    dy={10} 
+                    dx={-5}
+                    height={60} 
+                  />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} tickFormatter={(value) => `Rp ${financialData.formatCurrency(value)}`} width={80} />
                   <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
                   <ReferenceLine y={dailyFoodBudget} stroke="#ffb4ab" strokeDasharray="3 3" label={{ position: 'top', value: 'Batas Harian (Rp 30.000)', fill: '#ffb4ab', fontSize: 12 }} />
@@ -436,7 +471,8 @@ export default function Makan({ financialData }) {
                   type="date" 
                   value={filterStartDate}
                   onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]"
+                  onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark] cursor-pointer"
                   title="Dari Tanggal"
                 />
                 <span className="text-slate-500 text-sm">-</span>
@@ -444,7 +480,8 @@ export default function Makan({ financialData }) {
                   type="date" 
                   value={filterEndDate}
                   onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark]"
+                  onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                  className="bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark] cursor-pointer"
                   title="Sampai Tanggal"
                 />
                 {(filterStartDate || filterEndDate) && (

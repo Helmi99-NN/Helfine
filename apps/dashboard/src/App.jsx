@@ -43,6 +43,7 @@ import Trading from './components/Trading';
 import Cashflow from './components/Cashflow';
 import Resume from './components/Resume';
 import Login from './components/Login';
+import AIAssistant from './components/AIAssistant';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('helfine_auth') === 'true');
@@ -281,6 +282,7 @@ function App() {
       {activeTab === 'trading' && <Trading financialData={financialData} />}
       {activeTab === 'cashflow' && <Cashflow financialData={financialData} />}
       {activeTab === 'resume' && <Resume financialData={financialData} />}
+      <AIAssistant financialData={financialData} />
     </>
   );
 }

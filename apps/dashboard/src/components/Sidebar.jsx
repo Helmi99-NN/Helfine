@@ -54,6 +54,10 @@ export default function Sidebar({ activeTab, setActiveTab, financialData, isOpen
           <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'analytics' ? "'FILL' 1" : "normal" }}>monitoring</span>
           <span>Analitik</span>
         </button>
+        <button onClick={() => handleTabClick('cashflow')} className={`w-full ${activeTab === 'cashflow' ? 'bg-primary/10 text-primary border-r-2 border-primary' : 'text-slate-300 hover:bg-white/5 hover:text-slate-200'} flex items-center gap-3 px-6 py-4 transition-all hover:translate-x-1 duration-300`}>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'cashflow' ? "'FILL' 1" : "normal" }}>account_balance_wallet</span>
+          <span>Arus Kas</span>
+        </button>
 
         <button onClick={() => handleTabClick('strategy')} className={`w-full ${activeTab === 'strategy' ? 'bg-primary/10 text-primary border-r-2 border-primary' : 'text-slate-300 hover:bg-white/5 hover:text-slate-200'} flex items-center gap-3 px-6 py-4 transition-all hover:translate-x-1 duration-300`}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'strategy' ? "'FILL' 1" : "normal" }}>ads_click</span>
@@ -66,10 +70,6 @@ export default function Sidebar({ activeTab, setActiveTab, financialData, isOpen
         <button onClick={() => handleTabClick('trading')} className={`w-full ${activeTab === 'trading' ? 'bg-primary/10 text-primary border-r-2 border-primary' : 'text-slate-300 hover:bg-white/5 hover:text-slate-200'} flex items-center gap-3 px-6 py-4 transition-all hover:translate-x-1 duration-300`}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'trading' ? "'FILL' 1" : "normal" }}>candlestick_chart</span>
           <span>Trading</span>
-        </button>
-        <button onClick={() => handleTabClick('cashflow')} className={`w-full ${activeTab === 'cashflow' ? 'bg-primary/10 text-primary border-r-2 border-primary' : 'text-slate-300 hover:bg-white/5 hover:text-slate-200'} flex items-center gap-3 px-6 py-4 transition-all hover:translate-x-1 duration-300`}>
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'cashflow' ? "'FILL' 1" : "normal" }}>account_balance_wallet</span>
-          <span>Arus Kas</span>
         </button>
         <button onClick={() => handleTabClick('resume')} className={`w-full ${activeTab === 'resume' ? 'bg-primary/10 text-primary border-r-2 border-primary' : 'text-slate-300 hover:bg-white/5 hover:text-slate-200'} flex items-center gap-3 px-6 py-4 transition-all hover:translate-x-1 duration-300`}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'resume' ? "'FILL' 1" : "normal" }}>history</span>
