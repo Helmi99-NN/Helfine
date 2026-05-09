@@ -266,8 +266,9 @@ export default function Dashboard({ setActiveTab, financialData }) {
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} 
+                  tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} 
                   dy={10} 
+                  minTickGap={30}
                 />
                 <YAxis hide domain={['dataMin - 1000000', 'dataMax + 1000000']} />
                 <Tooltip content={<CustomTooltip />} />

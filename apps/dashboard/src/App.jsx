@@ -262,10 +262,34 @@ function App() {
 
   if (isDbLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-primary">
-        <span className="material-symbols-outlined text-6xl animate-spin mb-4">sync</span>
-        <h2 className="text-xl font-bold tracking-widest uppercase">Connecting to Database...</h2>
-      </div>
+      <>
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} financialData={financialData} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} isLightMode={isLightMode} setIsLightMode={setIsLightMode} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} />
+        <Header title="Memuat Data..." isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
+        <main className="pt-24 pb-12 px-gutter md:px-margin-page md:ml-64 w-full md:w-[calc(100%-16rem)]">
+          <div className="grid grid-cols-12 gap-6 md:gap-stack-lg max-w-7xl mx-auto">
+            {/* Hero Skeleton */}
+            <div className="col-span-12 glass-card rounded-xl p-container-padding flex flex-col justify-center h-48 animate-pulse bg-slate-200/50 dark:bg-white/5">
+              <div className="w-32 h-4 bg-slate-300 dark:bg-white/10 rounded mb-4"></div>
+              <div className="w-64 h-12 bg-slate-300 dark:bg-white/10 rounded-lg"></div>
+            </div>
+            
+            {/* Cards Skeleton */}
+            {[1, 2, 3].map(i => (
+              <div key={i} className="col-span-12 lg:col-span-4 h-36 glass-card rounded-xl p-6 flex flex-col justify-center animate-pulse bg-slate-200/50 dark:bg-white/5">
+                 <div className="w-10 h-10 rounded-full bg-slate-300 dark:bg-white/10 mb-4"></div>
+                 <div className="w-24 h-4 bg-slate-300 dark:bg-white/10 rounded mb-2"></div>
+                 <div className="w-32 h-6 bg-slate-300 dark:bg-white/10 rounded"></div>
+              </div>
+            ))}
+
+            {/* Chart Skeleton */}
+            <div className="col-span-12 h-96 glass-card rounded-xl p-6 animate-pulse bg-slate-200/50 dark:bg-white/5 flex flex-col">
+              <div className="w-48 h-6 bg-slate-300 dark:bg-white/10 rounded mb-8"></div>
+              <div className="flex-1 w-full bg-slate-300/50 dark:bg-white/5 rounded-lg"></div>
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
@@ -273,15 +297,17 @@ function App() {
     <>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} financialData={financialData} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} isLightMode={isLightMode} setIsLightMode={setIsLightMode} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} />
       <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
-      {activeTab === 'portfolio' && <Dashboard setActiveTab={setActiveTab} financialData={financialData} />}
-      {activeTab === 'analytics' && <Analytics financialData={financialData} />}
-      {activeTab === 'investments' && <Investments financialData={financialData} />}
-      {activeTab === 'savings' && <Savings financialData={financialData} />}
-      {activeTab === 'strategy' && <Strategy financialData={financialData} />}
-      {activeTab === 'makan' && <Makan financialData={financialData} />}
-      {activeTab === 'trading' && <Trading financialData={financialData} />}
-      {activeTab === 'cashflow' && <Cashflow financialData={financialData} />}
-      {activeTab === 'resume' && <Resume financialData={financialData} />}
+      <div key={activeTab} className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
+        {activeTab === 'portfolio' && <Dashboard setActiveTab={setActiveTab} financialData={financialData} />}
+        {activeTab === 'analytics' && <Analytics financialData={financialData} />}
+        {activeTab === 'investments' && <Investments financialData={financialData} />}
+        {activeTab === 'savings' && <Savings financialData={financialData} />}
+        {activeTab === 'strategy' && <Strategy financialData={financialData} />}
+        {activeTab === 'makan' && <Makan financialData={financialData} />}
+        {activeTab === 'trading' && <Trading financialData={financialData} />}
+        {activeTab === 'cashflow' && <Cashflow financialData={financialData} />}
+        {activeTab === 'resume' && <Resume financialData={financialData} />}
+      </div>
       <AIAssistant financialData={financialData} />
     </>
   );

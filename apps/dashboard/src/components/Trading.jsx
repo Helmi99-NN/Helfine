@@ -223,7 +223,7 @@ export default function Trading({ financialData }) {
             <span className="material-symbols-outlined text-error text-3xl shrink-0">psychology_alt</span>
             <div>
               <h3 className="text-sm font-bold text-error mb-1">Evaluasi Emosional</h3>
-              <p className="text-sm text-slate-800 leading-relaxed font-medium">
+              <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium transition-colors">
                 Sistem mendeteksi Anda paling sering mengalami <strong className="text-error font-bold drop-shadow-md">Loss</strong> saat bertrading dengan emosi <strong className="uppercase bg-error/20 text-error px-1.5 py-0.5 rounded font-bold">{dominantLossEmotion}</strong>. Cobalah untuk lebih tenang dan ikuti Trading Plan Anda!
               </p>
             </div>

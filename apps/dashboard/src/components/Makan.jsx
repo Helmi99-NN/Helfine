@@ -445,6 +445,7 @@ export default function Makan({ financialData }) {
                     dy={10} 
                     dx={-5}
                     height={60} 
+                    minTickGap={20}
                   />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} tickFormatter={(value) => `Rp ${financialData.formatCurrency(value)}`} width={80} />
                   <Tooltip content={<CustomTooltip />} cursor={{fill: 'rgba(255,255,255,0.05)'}} />

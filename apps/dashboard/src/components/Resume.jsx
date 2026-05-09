@@ -210,7 +210,7 @@ export default function Resume({ financialData }) {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} dy={10} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} dy={10} minTickGap={30} />
                   <YAxis hide domain={['dataMin - 2000000', 'dataMax + 2000000']} />
                   <RechartsTooltip content={<CustomAreaTooltip />} />
                   <Area type="monotone" dataKey="Total Aset" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorTotalAset)" />
@@ -229,7 +229,7 @@ export default function Resume({ financialData }) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} dy={10} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} dy={10} minTickGap={30} />
                   <YAxis hide />
                   <RechartsTooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                   <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px' }} />
