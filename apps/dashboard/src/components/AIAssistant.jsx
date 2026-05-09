@@ -184,29 +184,29 @@ Asisten:`;
 
   // Render chat window
   return (
-    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] w-[calc(100vw-32px)] sm:w-[360px] md:w-[400px] h-[600px] max-h-[85dvh] flex flex-col bg-surface-container/95 backdrop-blur-3xl border border-outline-variant/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden font-['Plus_Jakarta_Sans']">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] w-[calc(100vw-32px)] sm:w-[360px] md:w-[400px] h-[600px] max-h-[85dvh] flex flex-col bg-white/95 dark:bg-surface-container/95 backdrop-blur-3xl border border-slate-200 dark:border-outline-variant/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden font-['Plus_Jakarta_Sans']">
       
       {/* Header */}
-      <div className="p-4 bg-surface-container-high/50 border-b border-white/5 flex items-center justify-between">
+      <div className="p-4 bg-slate-100/80 dark:bg-surface-container-high/50 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-[#8A5CF6] flex items-center justify-center text-white shadow-inner">
             <span className="material-symbols-outlined text-[18px]">smart_toy</span>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-200">Gemini Asisten</h3>
-            <p className="text-[10px] text-slate-400">Personal AI Analyst</p>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Gemini Asisten</h3>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">Personal AI Analyst</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <button 
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isSettingsOpen ? 'bg-primary/20 text-primary' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isSettingsOpen ? 'bg-primary/20 text-primary' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-200'}`}
           >
             <span className="material-symbols-outlined text-[18px]">settings</span>
           </button>
           <button 
             onClick={() => setIsOpen(false)}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-error/20 hover:text-error transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-error/20 hover:text-error transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
@@ -215,11 +215,11 @@ Asisten:`;
 
       {/* Settings Panel */}
       {isSettingsOpen ? (
-        <div className="flex-1 p-6 flex flex-col justify-center gap-4 bg-surface-container-lowest/50">
+        <div className="flex-1 p-6 flex flex-col justify-center gap-4 bg-slate-50/80 dark:bg-surface-container-lowest/50">
           <div className="text-center mb-2">
             <span className="material-symbols-outlined text-4xl text-primary mb-2">key</span>
-            <h3 className="text-lg font-bold text-slate-200">API Key Gemini</h3>
-            <p className="text-xs text-slate-400 mt-1">Dapatkan API Key gratis di <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google AI Studio</a>.</p>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">API Key Gemini</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Dapatkan API Key gratis di <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google AI Studio</a>.</p>
           </div>
           <div className="flex flex-col gap-2">
             <input 
@@ -227,7 +227,7 @@ Asisten:`;
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
               placeholder="Paste API Key Anda di sini..."
-              className="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-inner"
+              className="w-full bg-white dark:bg-surface-container border border-slate-200 dark:border-outline-variant rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-inner"
             />
             <button 
               onClick={saveApiKey}
@@ -250,22 +250,22 @@ Asisten:`;
       ) : (
         <>
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-surface-variant scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-surface-variant scrollbar-track-transparent">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div 
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                     msg.role === 'user' 
-                      ? 'bg-primary text-on-primary rounded-tr-sm' 
+                      ? 'bg-primary text-white rounded-tr-sm shadow-md' 
                       : msg.isError 
-                        ? 'bg-error/20 text-error border border-error/30 rounded-tl-sm'
-                        : 'bg-surface-container text-slate-200 border border-outline-variant/30 rounded-tl-sm'
+                        ? 'bg-error/10 dark:bg-error/20 text-error border border-error/30 rounded-tl-sm'
+                        : 'bg-slate-100 dark:bg-surface-container text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-outline-variant/30 rounded-tl-sm shadow-sm'
                   }`}
                 >
                   {msg.role === 'user' ? (
                     msg.text
                   ) : (
-                    <div className="prose prose-sm prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:border prose-pre:border-white/10">
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 dark:prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 dark:prose-pre:border-white/10 text-slate-800 dark:text-slate-200">
                       <ReactMarkdown>{msg.text}</ReactMarkdown>
                     </div>
                   )}
@@ -274,7 +274,7 @@ Asisten:`;
             ))}
             {isLoading && (
               <div className="flex items-start">
-                <div className="bg-surface-container border border-outline-variant/30 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1">
+                <div className="bg-slate-100 dark:bg-surface-container border border-slate-200 dark:border-outline-variant/30 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1 shadow-sm">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }}></div>
                   <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }}></div>
@@ -285,14 +285,14 @@ Asisten:`;
           </div>
 
           {/* Input Area */}
-          <div className="p-3 bg-surface-container-lowest/50 border-t border-white/5">
-            <div className="relative flex items-end gap-2 bg-surface-container border border-outline-variant/50 rounded-xl p-1 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all shadow-inner">
+          <div className="p-3 bg-slate-50/80 dark:bg-surface-container-lowest/50 border-t border-slate-200 dark:border-white/5">
+            <div className="relative flex items-end gap-2 bg-white dark:bg-surface-container border border-slate-300 dark:border-outline-variant/50 rounded-xl p-1 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all shadow-inner">
               <textarea 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Tanya asisten keuangan..."
-                className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-200 px-3 py-2 max-h-32 min-h-[40px] resize-none outline-none scrollbar-thin"
+                className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 py-2 max-h-32 min-h-[40px] resize-none outline-none scrollbar-thin"
                 rows="1"
                 disabled={isLoading}
               />

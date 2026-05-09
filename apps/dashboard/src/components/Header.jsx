@@ -44,34 +44,34 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
           </button>
           
           {activeDropdown === 'notifications' && (
-            <div className="absolute right-0 mt-2 w-80 bg-slate-800est backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200">
-              <div className="px-4 py-2 border-b border-white/5 flex justify-between items-center bg-surface-container/50">
-                <span className="font-bold text-slate-200 text-sm">Notifikasi</span>
+            <div className="fixed sm:absolute top-[72px] sm:top-auto right-4 left-4 sm:left-auto sm:right-0 sm:mt-2 w-[calc(100vw-32px)] sm:w-80 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top sm:origin-top-right animate-in fade-in zoom-in-95 duration-200 z-50">
+              <div className="px-4 py-2 border-b border-slate-200 dark:border-white/5 flex justify-between items-center bg-slate-50/80 dark:bg-surface-container/50">
+                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Notifikasi</span>
                 <span className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full">2 Baru</span>
               </div>
               <div className="max-h-64 overflow-y-auto">
-                <button className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/5 flex gap-3 items-start">
+                <button className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors border-b border-slate-100 dark:border-white/5 flex gap-3 items-start">
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="material-symbols-outlined text-primary text-[18px]">account_balance</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-200">Dana darurat terisi</p>
-                    <p className="text-xs text-slate-300 mt-0.5">Alokasi ke Bank Jago sukses Rp 500.000</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Dana darurat terisi</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Alokasi ke Bank Jago sukses Rp 500.000</p>
                     <p className="text-[10px] text-slate-500 mt-1 font-data-mono">2 jam yang lalu</p>
                   </div>
                 </button>
-                <button className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors flex gap-3 items-start">
+                <button className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex gap-3 items-start">
                   <div className="w-8 h-8 rounded-full bg-[#FDE047]/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="material-symbols-outlined text-[#FDE047] text-[18px]">trending_up</span>
+                    <span className="material-symbols-outlined text-[#EAB308] dark:text-[#FDE047] text-[18px]">trending_up</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-200">Target Ipot tercapai</p>
-                    <p className="text-xs text-slate-300 mt-0.5">Portofolio Hana melewati Rp 1.000.000</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Target Ipot tercapai</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Portofolio Hana melewati Rp 1.000.000</p>
                     <p className="text-[10px] text-slate-500 mt-1 font-data-mono">1 hari yang lalu</p>
                   </div>
                 </button>
               </div>
-              <div className="px-4 py-2 border-t border-white/5 text-center bg-surface-container/50">
+              <div className="px-4 py-2 border-t border-slate-200 dark:border-white/5 text-center bg-slate-50/80 dark:bg-surface-container/50">
                 <a href="#" className="text-xs text-primary hover:underline font-bold">Tandai semua dibaca</a>
               </div>
             </div>
@@ -110,20 +110,20 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
           </button>
           
           {activeDropdown === 'settings' && (
-            <div className="absolute right-0 mt-2 w-56 bg-slate-800est backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200">
-              <div className="px-4 py-2 border-b border-white/5 bg-surface-container/50">
-                <span className="font-bold text-slate-200 text-sm">Pengaturan</span>
+            <div className="fixed sm:absolute top-[72px] sm:top-auto right-4 left-4 sm:left-auto sm:right-0 sm:mt-2 w-[calc(100vw-32px)] sm:w-56 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top sm:origin-top-right animate-in fade-in zoom-in-95 duration-200 z-50">
+              <div className="px-4 py-2 border-b border-slate-200 dark:border-white/5 bg-slate-50/80 dark:bg-surface-container/50">
+                <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Pengaturan</span>
               </div>
               <div className="py-1">
-                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-300 hover:text-slate-200">
+                <button className="w-full text-left px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200">
                   <span className="material-symbols-outlined text-[18px]">account_circle</span>
                   Pengaturan Akun
                 </button>
-                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-300 hover:text-slate-200">
+                <button className="w-full text-left px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200">
                   <span className="material-symbols-outlined text-[18px] text-primary">palette</span>
                   Tampilan & Tema
                 </button>
-                <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-300 hover:text-slate-200">
+                <button className="w-full text-left px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200">
                   <span className="material-symbols-outlined text-[18px]">security</span>
                   Keamanan & Privasi
                 </button>
@@ -144,26 +144,26 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
           </button>
           
           {activeDropdown === 'profile' && (
-            <div className="absolute right-0 mt-3 w-64 bg-slate-800est backdrop-blur-xl border border-white/10 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200">
-              <div className="px-4 py-3 border-b border-white/5 flex items-center gap-3 mb-1 bg-surface-container/50">
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-surface">
+            <div className="fixed sm:absolute top-[72px] sm:top-auto right-4 left-4 sm:left-auto sm:right-0 sm:mt-3 w-[calc(100vw-32px)] sm:w-64 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl shadow-xl py-2 overflow-hidden transform origin-top sm:origin-top-right animate-in fade-in zoom-in-95 duration-200 z-50">
+              <div className="px-4 py-3 border-b border-slate-200 dark:border-white/5 flex items-center gap-3 mb-1 bg-slate-50/80 dark:bg-surface-container/50">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-surface">
                   <img alt="Wealth Manager Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5GAo0Ip1NBCypzIgiRdZrSI6jkhMOk4ttICN93IriFIb9LkQRJPLmVUVazMGzefLaK6Naxb0RyYmxW391WsL_j1C2aPn5wLRSeEZcOnpm5ixULQwjIMYxhsdxgpgihDOdRnX2s5myQiwH3Amxp0E_8TayNr7hvTXUat81VnmiSVTpHXXYMjxHoIl5OaXWk422-EuX9sZScxdeN6MohbG6M0DlftALp0MsP-emB2BzndKTOM8_I7kGkJM8QegapLBH4hh7ON6Ris90"/>
                 </div>
                 <div>
-                  <p className="font-bold text-slate-200 text-sm">Helmi</p>
-                  <p className="text-xs text-slate-300">Asset Manager</p>
+                  <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">Helmi</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300">Asset Manager</p>
                 </div>
               </div>
-              <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-300 hover:text-slate-200 group">
+              <button className="w-full text-left px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200 group">
                 <span className="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">person</span>
                 Profil Saya
               </button>
-              <button className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-300 hover:text-slate-200 group">
+              <button className="w-full text-left px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex gap-3 items-center text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-200 group">
                 <span className="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">verified_user</span>
-                Premium Status <span className="ml-auto text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-widest border border-primary/20">Pro</span>
+                Premium Status <span className="ml-auto text-[10px] bg-primary/10 dark:bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-widest border border-primary/20">Pro</span>
               </button>
-              <div className="h-px bg-white/5 my-1"></div>
-              <button onClick={onLogout} className="w-full text-left px-4 py-2.5 hover:bg-[#F43F5E]/10 transition-colors flex gap-3 items-center text-sm text-[#F43F5E] hover:text-[#F43F5E]">
+              <div className="h-px bg-slate-200 dark:bg-white/5 my-1"></div>
+              <button onClick={onLogout} className="w-full text-left px-4 py-2.5 hover:bg-rose-50 dark:hover:bg-[#F43F5E]/10 transition-colors flex gap-3 items-center text-sm text-rose-600 dark:text-[#F43F5E] hover:text-rose-700 dark:hover:text-[#F43F5E]">
                 <span className="material-symbols-outlined text-[18px]">logout</span>
                 Keluar
               </button>

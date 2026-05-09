@@ -106,7 +106,7 @@ export default function Login({ onAuthSuccess }) {
           {pin.map((data, index) => (
             <input
               key={index}
-              type="password" // Use password to hide the actual numbers if desired, or text to show them. Let's use text for PIN so they see what they type. Wait, "password" hides it. Let's use text but mask it with CSS, or just "password".
+              type="tel"
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength="1"
@@ -115,6 +115,7 @@ export default function Login({ onAuthSuccess }) {
               onChange={e => handleChange(e.target, index)}
               onKeyDown={e => handleKeyDown(e, index)}
               className={`w-12 h-14 sm:w-14 sm:h-16 bg-surface-container-lowest/50 border ${error ? 'border-error text-error' : 'border-outline-variant text-primary focus:border-primary focus:ring-1 focus:ring-primary'} rounded-xl text-center text-2xl font-data-mono font-bold outline-none transition-all shadow-inner`}
+              style={{ WebkitTextSecurity: 'disc' }}
             />
           ))}
         </div>
