@@ -59,8 +59,100 @@ export default function Resume({ financialData }) {
     } catch (e) {}
   }, []);
 
+  const handlePosting = () => {
+    const { accounts, syncSheet } = financialData;
+    const today = new Date();
+    const monthYear = today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }); // e.g., "Mei 2026"
+    const monthLabel = `20 ${monthYear.split(' ')[0]}`; // e.g., "20 Mei"
+    
+    let savedHistory = [];
+    try {
+      const stored = localStorage.getItem('resume_dynamic_history');
+      if (stored) savedHistory = JSON.parse(stored);
+    } catch (e) {}
+    
+    // Cek apakah bulan ini sudah diposting
+    if (savedHistory.some(s => {
+      if (s.month === monthLabel) return true;
+      if (s.month && s.month.includes('T')) {
+        const dateObj = new Date(s.month);
+        const sMonth = dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        return monthYear === sMonth;
+      }
+      return false;
+    })) {
+      alert(`Data untuk bulan ${monthLabel} sudah diposting sebelumnya.`);
+      return;
+    }
+
+    // 1. Snapshot Accounts
+    const balances = accounts.map(acc => ({ name: acc.name, value: acc.value }));
+    
+    // 2. Snapshot Cashflow
+    let incomes = [];
+    let extraExpenses = [];
+    try {
+      const cf = JSON.parse(localStorage.getItem('cashflow_records') || '[]');
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      const currentMonthRecords = cf.filter(r => {
+        const d = new Date(r.date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      });
+      const incMap = {};
+      const expMap = {};
+      currentMonthRecords.forEach(r => {
+        if (r.type === 'Income') incMap[r.category] = (incMap[r.category] || 0) + r.amount;
+        else expMap[r.category] = (expMap[r.category] || 0) + r.amount;
+      });
+      incomes = Object.keys(incMap).map(k => ({ name: k, value: incMap[k] }));
+      extraExpenses = Object.keys(expMap).map(k => ({ name: k, value: expMap[k] }));
+    } catch (e) {}
+
+    // 3. Snapshot Operational & Makan
+    try {
+      const txs = JSON.parse(localStorage.getItem('strategy_transactions') || '[]');
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      const currentTxs = txs.filter(r => new Date(r.date).getMonth() === currentMonth && new Date(r.date).getFullYear() === currentYear);
+      const operationalSpent = currentTxs.reduce((sum, r) => sum + r.amount, 0);
+      if (operationalSpent > 0) extraExpenses.push({ name: 'Operasional', value: operationalSpent });
+    } catch (e) {}
+
+    try {
+      const txs = JSON.parse(localStorage.getItem('makan_transactions') || '[]');
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      const currentTxs = txs.filter(r => new Date(r.date).getMonth() === currentMonth && new Date(r.date).getFullYear() === currentYear);
+      const makanSpent = currentTxs.reduce((sum, r) => sum + r.amount, 0);
+      if (makanSpent > 0) extraExpenses.push({ name: 'Makan', value: makanSpent });
+    } catch (e) {}
+
+    // Create snapshot
+    const newSnapshot = {
+      id: Date.now(),
+      month: monthLabel,
+      balances,
+      incomes,
+      expenses: extraExpenses,
+      timestamp: today.toISOString()
+    };
+    
+    const newHistory = [...savedHistory, newSnapshot];
+    localStorage.setItem('resume_dynamic_history', JSON.stringify(newHistory));
+    setDynamicHistory(newHistory);
+    if (syncSheet) syncSheet('Resume', newHistory).catch(console.error); // Sync to DB
+    alert(`Berhasil memposting data untuk bulan ${monthLabel}!`);
+  };
+
   // Merge static and dynamic data
-  const allMonths = [...months, ...dynamicHistory.map(d => d.month)];
+  const allMonths = [...months, ...dynamicHistory.map(d => {
+    if (d.month && d.month.includes('T')) {
+      const dateObj = new Date(d.month);
+      return `20 ${dateObj.toLocaleDateString('id-ID', { month: 'long' })}`;
+    }
+    return d.month;
+  })];
   
   const getValues = (itemName, staticValues, type) => {
     const vals = [...staticValues];
@@ -181,14 +273,23 @@ export default function Resume({ financialData }) {
   return (
     <main className="md:ml-64 pt-24 px-4 md:px-margin-page pb-margin-page w-full md:w-[calc(100%-16rem)] min-h-screen">
       <div className="max-w-[1400px] mx-auto space-y-8">
-        <div>
-          <h2 className="text-display-lg font-display-lg text-slate-200 flex items-center gap-3">
-            <span className="material-symbols-outlined text-4xl text-primary">history</span>
-            Resume Bulanan
-          </h2>
-          <p className="text-slate-300 mt-2 font-body-base text-body-base max-w-3xl">
-            Rangkuman historis pergerakan total aset, pendapatan, dan pengeluaran setiap bulan. Diadaptasi dari catatan manual spreadsheet Anda menjadi visual interaktif.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-display-lg font-display-lg text-slate-200 flex items-center gap-3">
+              <span className="material-symbols-outlined text-4xl text-primary">history</span>
+              Resume Bulanan
+            </h2>
+            <p className="text-slate-300 mt-2 font-body-base text-body-base max-w-3xl">
+              Rangkuman historis pergerakan total aset, pendapatan, dan pengeluaran setiap bulan. Diadaptasi dari catatan manual spreadsheet Anda menjadi visual interaktif.
+            </p>
+          </div>
+          <button 
+            onClick={handlePosting}
+            className="flex items-center gap-2 bg-primary hover:bg-primary-fixed text-on-primary px-6 py-3 rounded-xl shadow-lg transition-all active:scale-95 whitespace-nowrap group"
+          >
+            <span className="material-symbols-outlined group-hover:-translate-y-1 transition-transform">publish</span>
+            Posting Data Bulan Ini
+          </button>
         </div>
 
         {/* Charts Row */}

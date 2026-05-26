@@ -16,6 +16,8 @@ export default function Cashflow({ financialData }) {
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [isOperationalPool, setIsOperationalPool] = useState(true); // Default dicentang untuk Income
+  const [paymentMethod, setPaymentMethod] = useState('Cash'); // 'Cash' or 'Saldo'
 
   // Filtering State
   const [filterStartDate, setFilterStartDate] = useState(() => {
@@ -30,13 +32,18 @@ export default function Cashflow({ financialData }) {
   const handleAddRecord = () => {
     if (!category || !amount) return;
     
+    const parsedAmount = parseFloat(amount.replace(/\D/g, ''));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
+
     const newRecord = {
       id: Date.now(),
       date,
       type,
       category,
-      amount: parseFloat(amount),
-      notes
+      amount: parsedAmount,
+      notes,
+      isOperationalPool: type === 'Income' ? isOperationalPool : false,
+      paymentMethod: type === 'Expense' ? paymentMethod : null
     };
 
     const newRecords = [newRecord, ...records];
@@ -44,6 +51,29 @@ export default function Cashflow({ financialData }) {
     localStorage.setItem('cashflow_records', JSON.stringify(newRecords));
     financialData.syncSheet && financialData.syncSheet('Cashflow', newRecords).catch(console.error);
     
+    // Auto-Sync with Portofolio (Savings/Equity)
+    if (!newRecord.isOperationalPool) {
+      const existingAccounts = financialData.accounts || [];
+      let accountChanged = false;
+      const newAccounts = existingAccounts.map(acc => {
+        if (acc.name.toLowerCase() === newRecord.category.toLowerCase()) {
+          accountChanged = true;
+          if (newRecord.type === 'Income') {
+            return { ...acc, value: acc.value + newRecord.amount };
+          } else if (newRecord.type === 'Expense') {
+            return { ...acc, value: Math.max(0, acc.value - newRecord.amount) };
+          }
+        }
+        return acc;
+      });
+
+      if (accountChanged) {
+        financialData.setAccounts && financialData.setAccounts(newAccounts);
+        localStorage.setItem('accounts_data', JSON.stringify(newAccounts));
+        financialData.syncSheet && financialData.syncSheet('Accounts', newAccounts).catch(console.error);
+      }
+    }
+
     // Reset form
     setCategory('');
     setIsCustomCategory(false);
@@ -53,10 +83,34 @@ export default function Cashflow({ financialData }) {
   };
 
   const handleDelete = (id) => {
+    const recordToDelete = records.find(t => t.id === id);
     const newRecords = records.filter(t => t.id !== id);
     setRecords(newRecords);
     localStorage.setItem('cashflow_records', JSON.stringify(newRecords));
     financialData.syncSheet && financialData.syncSheet('Cashflow', newRecords).catch(console.error);
+
+    // Undo Sync with Portofolio
+    if (recordToDelete && !recordToDelete.isOperationalPool) {
+      const existingAccounts = financialData.accounts || [];
+      let accountChanged = false;
+      const newAccounts = existingAccounts.map(acc => {
+        if (acc.name.toLowerCase() === recordToDelete.category.toLowerCase()) {
+          accountChanged = true;
+          if (recordToDelete.type === 'Income') {
+            return { ...acc, value: Math.max(0, acc.value - recordToDelete.amount) };
+          } else if (recordToDelete.type === 'Expense') {
+            return { ...acc, value: acc.value + recordToDelete.amount };
+          }
+        }
+        return acc;
+      });
+
+      if (accountChanged) {
+        financialData.setAccounts && financialData.setAccounts(newAccounts);
+        localStorage.setItem('accounts_data', JSON.stringify(newAccounts));
+        financialData.syncSheet && financialData.syncSheet('Accounts', newAccounts).catch(console.error);
+      }
+    }
   };
 
   // Apply Date Range Filter
@@ -272,6 +326,15 @@ export default function Cashflow({ financialData }) {
                           </optgroup>
                         )}
                         
+                        {/* Portofolio Accounts */}
+                        {financialData.accounts && financialData.accounts.length > 0 && (
+                          <optgroup label="Portofolio (Tabungan & Investasi)">
+                            {financialData.accounts.map(acc => (
+                              <option key={acc.id} value={acc.name}>{acc.name} - Rp{formatCurrency(acc.value)}</option>
+                            ))}
+                          </optgroup>
+                        )}
+                        
                         <optgroup label="Lainnya">
                           {type === 'Income' ? (
                             <>
@@ -301,15 +364,67 @@ export default function Cashflow({ financialData }) {
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-data-mono text-slate-300 text-sm">Rp</span>
                   <input 
                     ref={amountRef}
-                    type="number" 
+                    type="text" 
                     value={amount} 
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, '');
+                      if (raw) {
+                        setAmount(parseInt(raw, 10).toLocaleString('id-ID'));
+                      } else {
+                        setAmount('');
+                      }
+                    }}
                     onKeyDown={(e) => handleEnter(e, 'submit')}
                     placeholder="0" 
                     className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Keterangan (Opsional)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">notes</span>
+                  <input 
+                    type="text" 
+                    value={notes} 
+                    onChange={(e) => setNotes(e.target.value)}
+                    onKeyDown={(e) => handleEnter(e, 'submit')}
+                    placeholder="Tulis catatan tambahan..." 
+                    className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
+                  />
+                </div>
+              </div>
+
+              {type === 'Expense' && (
+                <div>
+                  <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Metode Pembayaran</label>
+                  <div className="flex gap-3">
+                    <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'Cash' ? 'bg-[#FDE047]/10 border-[#FDE047]/50 text-[#FDE047]' : 'border-outline-variant text-slate-400 hover:bg-surface-variant/30'}`}>
+                      <input type="radio" name="payment" value="Cash" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} className="hidden" />
+                      <span className="material-symbols-outlined text-[18px]">payments</span>
+                      <span className="text-sm font-medium">Cash</span>
+                    </label>
+                    <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'Saldo' ? 'bg-[#FDE047]/10 border-[#FDE047]/50 text-[#FDE047]' : 'border-outline-variant text-slate-400 hover:bg-surface-variant/30'}`}>
+                      <input type="radio" name="payment" value="Saldo" checked={paymentMethod === 'Saldo'} onChange={() => setPaymentMethod('Saldo')} className="hidden" />
+                      <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                      <span className="text-sm font-medium">Saldo</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {type === 'Income' && (
+                <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 p-3 rounded-xl mt-2 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => setIsOperationalPool(!isOperationalPool)}>
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${isOperationalPool ? 'bg-primary border-primary text-white' : 'border-outline-variant text-transparent'}`}>
+                    <span className="material-symbols-outlined text-[14px]">check</span>
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-sm font-bold text-slate-200 block">Masukkan ke Saldo Operasional?</span>
+                    <span className="text-[10px] text-slate-400 leading-tight block mt-0.5">Uang ini akan ditampung di Pool Operasional untuk Anda bagikan ke kantong-kantong.</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <button 
@@ -365,7 +480,15 @@ export default function Cashflow({ financialData }) {
                             {record.type === 'Income' ? 'Pemasukan' : 'Pengeluaran'}
                           </div>
                         </td>
-                        <td className="p-4 font-medium text-slate-200">{record.category}</td>
+                        <td className="p-4">
+                          <div className="font-medium text-slate-200">{record.category}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {record.paymentMethod && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30 text-slate-400 uppercase tracking-widest">{record.paymentMethod}</span>
+                            )}
+                            {record.notes && <span className="text-xs text-slate-400">{record.notes}</span>}
+                          </div>
+                        </td>
                         <td className={`p-4 text-right font-data-mono font-bold ${record.type === 'Income' ? 'text-primary' : 'text-[#FDE047]'}`}>
                           {record.type === 'Income' ? '+' : '-'}Rp {formatCurrency(record.amount)}
                         </td>

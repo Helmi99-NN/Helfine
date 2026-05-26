@@ -8,6 +8,25 @@ export default function Savings({ financialData }) {
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
+  const [syncingId, setSyncingId] = useState(null);
+  
+  const getRelativeTime = (timestamp) => {
+    if (!timestamp) return 'Baru saja';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Baru saja';
+    if (diffMins < 60) return `${diffMins} menit lalu`;
+    if (diffHours < 24) return `${diffHours} jam lalu`;
+    if (diffDays === 1) return 'Kemarin';
+    if (diffDays < 7) return `${diffDays} hari lalu`;
+    
+    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  };
   
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -38,7 +57,9 @@ export default function Savings({ financialData }) {
       ...randomScheme
     };
 
-    setAccounts([...accounts, newAsset]);
+    const newAccounts = [...accounts, newAsset];
+    setAccounts(newAccounts);
+    financialData.syncSheet('Accounts', newAccounts).catch(console.error);
     setIsAddModalOpen(false);
     setNewAssetName('');
     setNewAssetType('Savings');
@@ -46,8 +67,18 @@ export default function Savings({ financialData }) {
 
   const handleDeleteAsset = () => {
     if (!deleteTargetId) return;
-    setAccounts(accounts.filter(acc => acc.id !== deleteTargetId));
+    const newAccounts = accounts.filter(acc => acc.id !== deleteTargetId);
+    setAccounts(newAccounts);
+    financialData.syncSheet('Accounts', newAccounts).catch(console.error);
     setDeleteTargetId(null);
+  };
+
+  const handleMoveCategory = (id, newType) => {
+    const newAccounts = accounts.map(acc => 
+      acc.id === id ? { ...acc, type: newType } : acc
+    );
+    setAccounts(newAccounts);
+    financialData.syncSheet('Accounts', newAccounts).catch(console.error);
   };
 
   const handleStartEdit = (id, currentName) => {
@@ -57,17 +88,29 @@ export default function Savings({ financialData }) {
 
   const handleSaveEdit = (id) => {
     if (editName.trim()) {
-      setAccounts(accounts.map(acc => 
+      const newAccounts = accounts.map(acc => 
         acc.id === id ? { ...acc, name: editName.trim() } : acc
-      ));
+      );
+      setAccounts(newAccounts);
+      financialData.syncSheet('Accounts', newAccounts).catch(console.error);
     }
     setEditingId(null);
+  };
+
+  const handleManualSync = async (id) => {
+    setSyncingId(id);
+    try {
+      await financialData.syncSheet('Accounts', accounts);
+    } catch (e) {
+      console.error(e);
+    }
+    setTimeout(() => setSyncingId(null), 1000);
   };
 
   const handleValueChange = (id, newValue) => {
     const numericValue = parseInt(newValue.replace(/\D/g, '')) || 0;
     setAccounts(accounts.map(acc => 
-      acc.id === id ? { ...acc, value: numericValue } : acc
+      acc.id === id ? { ...acc, value: numericValue, lastUpdated: new Date().toISOString() } : acc
     ));
   };
 
@@ -195,18 +238,33 @@ export default function Savings({ financialData }) {
             >
               <div className="absolute inset-0 rounded-xl border border-white/5 pointer-events-none"></div>
               
-              {/* Delete Handle Icon */}
-              <button 
-                onClick={() => setDeleteTargetId(acc.id)}
-                className="absolute top-4 right-12 w-6 h-6 flex items-center justify-center text-error/40 hover:text-error opacity-0 group-hover:opacity-100 transition-all hover:bg-error/10 rounded-md pointer-events-auto"
-                title="Hapus Aset"
-              >
-                <span className="material-symbols-outlined text-[16px]">delete</span>
-              </button>
+              {/* Action Buttons Group */}
+              <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
+                {/* Move Category Icon */}
+                <button 
+                  onClick={() => handleMoveCategory(acc.id, acc.type === 'Equity' ? 'Savings' : 'Equity')}
+                  className="w-7 h-7 flex items-center justify-center text-primary/50 hover:text-primary transition-all hover:bg-primary/10 rounded-md"
+                  title="Pindah Kategori"
+                >
+                  <span className="material-symbols-outlined text-[18px]">swap_horiz</span>
+                </button>
 
-              {/* Drag Handle Icon */}
-              <div className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center text-slate-300/50 group-hover:text-slate-300 transition-colors pointer-events-none cursor-grab active:cursor-grabbing">
-                <span className="material-symbols-outlined text-[20px]">drag_indicator</span>
+                {/* Delete Handle Icon */}
+                <button 
+                  onClick={() => setDeleteTargetId(acc.id)}
+                  className="w-7 h-7 flex items-center justify-center text-error/50 hover:text-error transition-all hover:bg-error/10 rounded-md"
+                  title="Hapus Aset"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+
+                {/* Drag Handle Icon */}
+                <div 
+                  className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors cursor-grab active:cursor-grabbing"
+                  title="Tahan untuk menggeser urutan"
+                >
+                  <span className="material-symbols-outlined text-[20px]">drag_indicator</span>
+                </div>
               </div>
 
               <div className="flex items-start justify-between mb-stack-md pr-12">
@@ -252,11 +310,17 @@ export default function Savings({ financialData }) {
                 </div>
               </div>
               <div className="mt-stack-sm flex items-center justify-between">
-                <span className="font-label-sm text-label-sm text-slate-300/70 flex items-center gap-1">
+                <span className="font-label-sm text-label-sm text-slate-300 opacity-70 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px]">update</span>
-                  Terakhir diperbarui: Hari ini
+                  Terakhir diperbarui: {getRelativeTime(acc.lastUpdated)}
                 </span>
-                <button className="text-primary hover:text-emerald-300 font-label-sm text-label-sm transition-colors">Sync</button>
+                <button 
+                  onClick={() => handleManualSync(acc.id)}
+                  disabled={syncingId === acc.id}
+                  className="text-primary hover:text-emerald-300 font-label-sm text-label-sm transition-colors disabled:opacity-50"
+                >
+                  {syncingId === acc.id ? 'Tersimpan ✓' : 'Sync'}
+                </button>
               </div>
             </div>
           ))}
@@ -270,7 +334,7 @@ export default function Savings({ financialData }) {
               <span className="material-symbols-outlined text-3xl">add</span>
             </div>
             <span className="font-headline-md text-headline-md text-slate-300 group-hover:text-primary transition-colors">Tambah Aset</span>
-            <span className="font-label-sm text-label-sm text-slate-300/50 mt-1">Lacak investasi manual</span>
+            <span className="font-label-sm text-label-sm text-slate-300 opacity-50 mt-1">Lacak investasi manual</span>
           </button>
         </div>
       </main>

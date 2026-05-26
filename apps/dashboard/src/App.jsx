@@ -42,11 +42,12 @@ import Makan from './components/Makan';
 import Trading from './components/Trading';
 import Cashflow from './components/Cashflow';
 import Resume from './components/Resume';
+import Ledger from './components/Ledger';
 import Login from './components/Login';
 import AIAssistant from './components/AIAssistant';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('helfine_auth') === 'true');
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Disable lock during development
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const [isLightMode, setIsLightMode] = useState(() => localStorage.getItem('helfine_theme') === 'light');
@@ -54,8 +55,9 @@ function App() {
   const [isDbLoading, setIsDbLoading] = useState(true);
   const [dbError, setDbError] = useState(null);
   
-  // Auto-lock when app goes to background
+  // Auto-lock when app goes to background (Disabled for development)
   useEffect(() => {
+    /*
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         sessionStorage.removeItem('helfine_auth');
@@ -68,6 +70,7 @@ function App() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
+    */
   }, []);
 
   // Global Privacy Body Class
@@ -83,9 +86,11 @@ function App() {
   useEffect(() => {
     if (isLightMode) {
       document.body.classList.add('light-mode');
+      document.documentElement.classList.remove('dark');
       localStorage.setItem('helfine_theme', 'light');
     } else {
       document.body.classList.remove('light-mode');
+      document.documentElement.classList.add('dark');
       localStorage.setItem('helfine_theme', 'dark');
     }
   }, [isLightMode]);
@@ -94,82 +99,7 @@ function App() {
   const [accounts, setAccounts] = useState(INITIAL_ACCOUNTS);
   const [operationalWallets, setOperationalWallets] = useState(INITIAL_OPERATIONAL);
 
-  // Auto-Snapshot Engine (Tanggal 20)
-  React.useEffect(() => {
-    const checkAndRunSnapshot = () => {
-      const today = new Date();
-      if (today.getDate() >= 20) {
-        const monthYear = today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }); // e.g., "Mei 2026"
-        const monthLabel = `20 ${monthYear.split(' ')[0]}`; // e.g., "20 Mei"
-        
-        let savedHistory = [];
-        try {
-          const stored = localStorage.getItem('resume_dynamic_history');
-          if (stored) savedHistory = JSON.parse(stored);
-        } catch (e) {}
-        
-        if (!savedHistory.some(s => s.month === monthLabel)) {
-          // 1. Snapshot Accounts
-          const balances = accounts.map(acc => ({ name: acc.name, value: acc.value }));
-          
-          // 2. Snapshot Cashflow
-          let incomes = [];
-          let extraExpenses = [];
-          try {
-            const cf = JSON.parse(localStorage.getItem('cashflow_records') || '[]');
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            const currentMonthRecords = cf.filter(r => {
-              const d = new Date(r.date);
-              return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-            });
-            const incMap = {};
-            const expMap = {};
-            currentMonthRecords.forEach(r => {
-              if (r.type === 'Income') incMap[r.category] = (incMap[r.category] || 0) + r.amount;
-              else expMap[r.category] = (expMap[r.category] || 0) + r.amount;
-            });
-            incomes = Object.keys(incMap).map(k => ({ name: k, value: incMap[k] }));
-            extraExpenses = Object.keys(expMap).map(k => ({ name: k, value: expMap[k] }));
-          } catch (e) {}
 
-          // 3. Snapshot Operational & Makan
-          try {
-            const txs = JSON.parse(localStorage.getItem('strategy_transactions') || '[]');
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            const currentTxs = txs.filter(r => new Date(r.date).getMonth() === currentMonth && new Date(r.date).getFullYear() === currentYear);
-            const operationalSpent = currentTxs.reduce((sum, r) => sum + r.amount, 0);
-            if (operationalSpent > 0) extraExpenses.push({ name: 'Operasional', value: operationalSpent });
-          } catch (e) {}
-
-          try {
-            const txs = JSON.parse(localStorage.getItem('makan_transactions') || '[]');
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            const currentTxs = txs.filter(r => new Date(r.date).getMonth() === currentMonth && new Date(r.date).getFullYear() === currentYear);
-            const makanSpent = currentTxs.reduce((sum, r) => sum + r.amount, 0);
-            if (makanSpent > 0) extraExpenses.push({ name: 'Makan', value: makanSpent });
-          } catch (e) {}
-
-          // Create snapshot
-          const newSnapshot = {
-            id: Date.now(),
-            month: monthLabel,
-            balances,
-            incomes,
-            expenses: extraExpenses,
-            timestamp: today.toISOString()
-          };
-          
-          savedHistory.push(newSnapshot);
-          localStorage.setItem('resume_dynamic_history', JSON.stringify(savedHistory));
-          syncSheet('Resume', savedHistory).catch(console.error); // Sync to DB
-        }
-      }
-    };
-    if (isAuthenticated && !isDbLoading) checkAndRunSnapshot();
-  }, [accounts, isDbLoading, isAuthenticated]);
 
   // Auto-sync Accounts with debounce
   useEffect(() => {
@@ -218,10 +148,53 @@ function App() {
   // Derived Totals
   const totalInvestasi = accounts.filter(a => a.type === 'Equity').reduce((sum, a) => sum + a.value, 0);
   const totalTabungan = accounts.filter(a => a.type === 'Savings').reduce((sum, a) => sum + a.value, 0);
-  const operationalBalance = operationalWallets.reduce((sum, w) => {
-    const status = w.status || 'filled';
-    return status === 'filled' ? sum + w.value : sum;
-  }, 0);
+  
+  const cashflowRecords = (() => {
+    try {
+      const saved = localStorage.getItem('cashflow_records');
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return [];
+  })();
+
+  // Hitung total dana Gaji/Pemasukan yang dimasukkan ke Pool (Kas Induk)
+  const totalPoolIn = cashflowRecords
+    .filter(r => r.type === 'Income' && r.isOperationalPool)
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // Hitung total dana yang sudah ditarik/ditransfer dari Pool ke Tabungan
+  const totalPoolTransferOut = cashflowRecords
+    .filter(r => r.type === 'Expense' && r.isPoolTransfer)
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // Hitung pengeluaran operasional (expense biasa yang bukan transfer)
+  const totalOperationalExpenses = cashflowRecords
+    .filter(r => r.type === 'Expense' && !r.isPoolTransfer)
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // Mapping dompet untuk menghitung sisa saldo di masing-masing amplop
+  const walletsWithBalance = operationalWallets.map(w => {
+    const nameLower = w.name.toLowerCase();
+    const spent = cashflowRecords
+      .filter(r => r.type === 'Expense' && !r.isPoolTransfer && r.category.toLowerCase().includes(nameLower))
+      .reduce((sum, r) => sum + r.amount, 0);
+      
+    const balance = w.balance || 0; // Mulai dari 0 jika belum pernah diisi
+    const currentBalance = balance - spent;
+    
+    return { ...w, balance, spent, currentBalance };
+  });
+
+  // Total dana yang Asli dimasukkan ke kantong-kantong saat ini (Isi Saldo, bukan Target Budget)
+  const totalAllocated = walletsWithBalance.reduce((sum, w) => sum + w.balance, 0);
+
+  // Sisa Saldo Induk (Pool) yang belum dibagikan
+  const operationalPoolBalance = totalPoolIn - totalPoolTransferOut - totalAllocated;
+
+  // Grand Total Operasional = (Dana di Kantong + Sisa di Pool) - Pengeluaran Kantong
+  // Secara matematis: (totalAllocated + operationalPoolBalance) - totalOperationalExpenses
+  const operationalBalance = (totalAllocated + operationalPoolBalance) - totalOperationalExpenses;
+  
   const totalAssets = totalInvestasi + totalTabungan + operationalBalance;
 
   // Bundle to pass easily
@@ -237,9 +210,10 @@ function App() {
   const financialData = {
     accounts,
     setAccounts,
-    operationalWallets,
+    operationalWallets: walletsWithBalance,
     setOperationalWallets,
     operationalBalance,
+    operationalPoolBalance,
     totalInvestasi,
     totalTabungan,
     totalAssets,
@@ -296,7 +270,7 @@ function App() {
   return (
     <>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} financialData={financialData} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} isLightMode={isLightMode} setIsLightMode={setIsLightMode} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} />
-      <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
+      <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : activeTab === 'ledger' ? 'Buku Besar' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
       <div key={activeTab} className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
         {activeTab === 'portfolio' && <Dashboard setActiveTab={setActiveTab} financialData={financialData} />}
         {activeTab === 'analytics' && <Analytics financialData={financialData} />}
@@ -306,6 +280,7 @@ function App() {
         {activeTab === 'makan' && <Makan financialData={financialData} />}
         {activeTab === 'trading' && <Trading financialData={financialData} />}
         {activeTab === 'cashflow' && <Cashflow financialData={financialData} />}
+        {activeTab === 'ledger' && <Ledger financialData={financialData} />}
         {activeTab === 'resume' && <Resume financialData={financialData} />}
       </div>
       <AIAssistant financialData={financialData} />

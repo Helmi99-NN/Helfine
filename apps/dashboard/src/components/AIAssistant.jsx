@@ -13,6 +13,9 @@ export default function AIAssistant({ financialData }) {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  
+  const fileInputRef = useRef(null);
   
   const messagesEndRef = useRef(null);
 
@@ -106,33 +109,124 @@ export default function AIAssistant({ financialData }) {
     return context;
   };
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim() || !apiKey) return;
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validasi ukuran file maks 4MB
+    if (file.size > 4 * 1024 * 1024) {
+      alert("Ukuran gambar terlalu besar. Maksimal 4MB.");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setSelectedImage({
+        data: event.target.result,
+        type: file.type
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
-    const userMessage = { role: 'user', text: inputText };
+  const handleSendMessage = async () => {
+    if ((!inputText.trim() && !selectedImage) || !apiKey) return;
+
+    const userMessage = { role: 'user', text: inputText, image: selectedImage ? selectedImage.data : null };
     setMessages(prev => [...prev, userMessage]);
+    
+    const currentInputText = inputText;
+    const currentImage = selectedImage;
+    
     setInputText('');
+    setSelectedImage(null);
     setIsLoading(true);
 
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
+      
+      const tools = [
+        {
+          functionDeclarations: [
+            {
+              name: "delete_resume_snapshot",
+              description: "Menghapus data resume historis pada bulan tertentu. Gunakan ini jika pengguna secara eksplisit meminta untuk mereset, mengulang, atau menghapus data riwayat/resume di bulan tertentu.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  target_month: {
+                    type: "STRING",
+                    description: "Bulan target yang akan dihapus, format seperti '20 Mei', '20 Juni', dsb."
+                  }
+                },
+                required: ["target_month"]
+              }
+            }
+          ]
+        }
+      ];
+
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools }); 
       
       const context = buildContext();
       
-      const prompt = `
+      const promptText = `
 System Prompt (Konteks Internal):
 ${context}
 
 Riwayat Percakapan:
-${messages.map(m => `${m.role === 'user' ? 'Pengguna' : 'Asisten'}: ${m.text}`).join('\n')}
+${messages.map(m => `${m.role === 'user' ? 'Pengguna' : 'Asisten'}: ${m.text || (m.image ? '[Mengirim Gambar]' : '')}`).join('\n')}
 
-Pengguna: ${userMessage.text}
+Pengguna: ${currentInputText}
 Asisten:`;
 
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
+      const promptParts = [promptText];
+      if (currentImage) {
+        promptParts.push({
+          inlineData: {
+            data: currentImage.data.split(',')[1],
+            mimeType: currentImage.type
+          }
+        });
+      }
+
+      const result = await model.generateContent(promptParts);
       
+      const functionCalls = result.response.functionCalls();
+      if (functionCalls && functionCalls.length > 0) {
+        const call = functionCalls[0];
+        if (call.name === "delete_resume_snapshot") {
+          const targetMonth = call.args.target_month;
+          let savedHistory = [];
+          try {
+            savedHistory = JSON.parse(localStorage.getItem('resume_dynamic_history') || '[]');
+          } catch(e) {}
+          
+          const newHistory = savedHistory.filter(s => {
+            if (s.month.toLowerCase().includes(targetMonth.toLowerCase())) return false;
+            if (s.month.includes('T')) {
+              const dateObj = new Date(s.month);
+              const friendlyMonth = `20 ${dateObj.toLocaleDateString('id-ID', { month: 'long' })}`;
+              if (friendlyMonth.toLowerCase().includes(targetMonth.toLowerCase())) return false;
+            }
+            return true;
+          });
+          
+          if (newHistory.length < savedHistory.length) {
+            localStorage.setItem('resume_dynamic_history', JSON.stringify(newHistory));
+            if (financialData.syncSheet) {
+              financialData.syncSheet('Resume', newHistory).catch(console.error);
+            }
+            setMessages(prev => [...prev, { role: 'assistant', text: `✅ Berhasil mereset data resume untuk bulan **${targetMonth}**. Data telah dihapus dari penyimpanan lokal dan database. Silakan *refresh* (muat ulang) halaman untuk melihat perubahannya di tabel.` }]);
+          } else {
+            setMessages(prev => [...prev, { role: 'assistant', text: `❌ Gagal mereset. Tidak dapat menemukan data resume historis untuk bulan **${targetMonth}**.` }]);
+          }
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const responseText = result.response.text();
       setMessages(prev => [...prev, { role: 'assistant', text: responseText }]);
     } catch (error) {
       console.error("Gemini API Error:", error);
@@ -140,7 +234,6 @@ Asisten:`;
       
       if (error.message && error.message.toLowerCase().includes('api key')) {
         errorMsg = "API Key tidak valid atau salah. Silakan periksa kembali API Key di pengaturan (ikon ⚙️).";
-        removeApiKey();
       } else if (error.message && error.message.includes('404')) {
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
@@ -256,14 +349,19 @@ Asisten:`;
                 <div 
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                     msg.role === 'user' 
-                      ? 'bg-primary text-white rounded-tr-sm shadow-md' 
+                      ? 'bg-primary text-[#ffffff] rounded-tr-sm shadow-md' 
                       : msg.isError 
                         ? 'bg-error/10 dark:bg-error/20 text-error border border-error/30 rounded-tl-sm'
                         : 'bg-slate-100 dark:bg-surface-container text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-outline-variant/30 rounded-tl-sm shadow-sm'
                   }`}
                 >
                   {msg.role === 'user' ? (
-                    msg.text
+                    <div className="flex flex-col gap-2">
+                      {msg.image && (
+                        <img src={msg.image} alt="Uploaded" className="max-w-[200px] rounded-lg border border-white/20" />
+                      )}
+                      <span>{msg.text}</span>
+                    </div>
                   ) : (
                     <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-800 dark:prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 dark:prose-pre:border-white/10 text-slate-800 dark:text-slate-200">
                       <ReactMarkdown>{msg.text}</ReactMarkdown>
@@ -286,7 +384,32 @@ Asisten:`;
 
           {/* Input Area */}
           <div className="p-3 bg-slate-50/80 dark:bg-surface-container-lowest/50 border-t border-slate-200 dark:border-white/5">
+            {selectedImage && (
+              <div className="mb-2 relative inline-block">
+                <img src={selectedImage.data} alt="Preview" className="h-16 rounded-md border border-slate-200 dark:border-outline-variant/50 shadow-sm" />
+                <button 
+                  onClick={() => setSelectedImage(null)}
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-error text-white rounded-full flex items-center justify-center text-[10px] hover:scale-110 transition-transform"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <div className="relative flex items-end gap-2 bg-white dark:bg-surface-container border border-slate-300 dark:border-outline-variant/50 rounded-xl p-1 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all shadow-inner">
+              <input 
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-8 h-8 flex-shrink-0 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg flex items-center justify-center transition-colors mb-0.5 ml-0.5"
+                title="Unggah Gambar"
+              >
+                <span className="material-symbols-outlined text-[20px]">attach_file</span>
+              </button>
               <textarea 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}

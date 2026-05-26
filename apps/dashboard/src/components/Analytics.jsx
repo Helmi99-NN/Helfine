@@ -46,6 +46,21 @@ export default function Analytics({ financialData }) {
     { name: 'Operasional', value: operationalBalance, color: '#F59E0B' }
   ].filter(item => item.value > 0);
 
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    if (percent < 0.05) return null; // Hide very small labels
+
+    return (
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="font-data-mono text-xs font-bold" style={{ textShadow: '0px 1px 2px rgba(0,0,0,0.5)' }}>
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
   return (
     <main className="md:ml-64 pt-24 px-4 md:px-margin-page pb-margin-page w-full md:w-[calc(100%-16rem)] min-h-screen">
       {/* Bento Grid Layout */}
@@ -78,6 +93,24 @@ export default function Analytics({ financialData }) {
             {compositionData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
+                  {/* Bottom 3D Layer (Shadow/Thickness) */}
+                  <Pie
+                    data={compositionData}
+                    cx="50%"
+                    cy="54%"
+                    innerRadius={70}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                    isAnimationActive={false}
+                  >
+                    {compositionData.map((entry, index) => (
+                      <Cell key={`cell-depth-${index}`} fill={entry.color} style={{ filter: 'brightness(0.5)' }} />
+                    ))}
+                  </Pie>
+
+                  {/* Top Layer */}
                   <Pie
                     data={compositionData}
                     cx="50%"
@@ -87,6 +120,8 @@ export default function Analytics({ financialData }) {
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
+                    labelLine={false}
+                    label={renderCustomizedLabel}
                   >
                     {compositionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />

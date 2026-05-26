@@ -2,7 +2,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbx28na0RROvEBfcjJKMgr-d
 
 export const fetchDatabase = async () => {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(API_URL, { cache: 'no-store' });
     if (!response.ok) throw new Error("Failed to fetch data");
     const json = await response.json();
     if (json.status !== 'success') throw new Error(json.message || "API Error");

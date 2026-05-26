@@ -58,6 +58,10 @@ export default function Sidebar({ activeTab, setActiveTab, financialData, isOpen
           <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'cashflow' ? "'FILL' 1" : "normal" }}>account_balance_wallet</span>
           <span>Arus Kas</span>
         </button>
+        <button onClick={() => handleTabClick('ledger')} className={`w-full ${activeTab === 'ledger' ? 'bg-primary/10 text-primary border-r-2 border-primary' : 'text-slate-300 hover:bg-white/5 hover:text-slate-200'} flex items-center gap-3 px-6 py-4 transition-all hover:translate-x-1 duration-300`}>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'ledger' ? "'FILL' 1" : "normal" }}>menu_book</span>
+          <span>Buku Besar</span>
+        </button>
 
         <button onClick={() => handleTabClick('strategy')} className={`w-full ${activeTab === 'strategy' ? 'bg-primary/10 text-primary border-r-2 border-primary' : 'text-slate-300 hover:bg-white/5 hover:text-slate-200'} flex items-center gap-3 px-6 py-4 transition-all hover:translate-x-1 duration-300`}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: activeTab === 'strategy' ? "'FILL' 1" : "normal" }}>ads_click</span>

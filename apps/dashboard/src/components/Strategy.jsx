@@ -5,23 +5,10 @@ export default function Strategy({ financialData }) {
   const mainWallet = operationalWallets.find(w => w.id === 'main') || { value: 800000 };
   const monthlyPlayBudget = mainWallet.value;
 
-  const [playTransactions, setPlayTransactions] = useState(() => {
-    try {
-      const stored = localStorage.getItem('strategy_transactions');
-      if (stored) return JSON.parse(stored);
-    } catch (e) {}
-    return [];
-  });
-  const [playInput, setPlayInput] = useState('');
-  
-  const totalPlaySpent = playTransactions.reduce((acc, curr) => acc + curr.amount, 0);
-  const remainingPlayBudget = monthlyPlayBudget - totalPlaySpent;
-  const isPlayOverBudget = totalPlaySpent > monthlyPlayBudget;
-
   const handleValueChange = (id, newValue) => {
     const numericValue = parseInt(newValue.replace(/\D/g, '')) || 0;
     setOperationalWallets && setOperationalWallets(operationalWallets.map(w => 
-      w.id === id ? { ...w, value: numericValue } : w
+      w.id === id ? { ...w, balance: numericValue } : w
     ));
   };
 
@@ -34,58 +21,56 @@ export default function Strategy({ financialData }) {
     return [];
   });
 
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const currentMonthCashflow = cashflowRecords.filter(r => {
-    const d = new Date(r.date);
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  });
-
-  const getAutomatedStatus = (walletName) => {
-    const nameLower = walletName.toLowerCase();
-    const hasExpense = currentMonthCashflow.some(r => r.type === 'Expense' && r.category.toLowerCase().includes(nameLower));
-    const hasIncome = currentMonthCashflow.some(r => r.type === 'Income' && r.category.toLowerCase().includes(nameLower));
-
-    if (hasExpense) return 'used';
-    if (hasIncome) return 'filled';
-    return 'empty';
-  };
-
-  const getToggleVisuals = (status) => {
-    switch (status) {
-      case 'empty':
-        return { containerClass: 'bg-surface-variant/50 border-outline-variant/50', circleClass: 'bg-outline left-0.5', label: 'Belum Terisi' };
-      case 'used':
-        return { containerClass: 'bg-[#eab308]/20 border-[#eab308]/30', circleClass: 'bg-[#eab308] right-0.5', label: 'Terpakai' };
-      case 'filled':
-      default:
-        return { containerClass: 'bg-primary/20 border-primary/30', circleClass: 'bg-primary left-[50%] -translate-x-[50%]', label: 'Terisi' };
+  const handleTransferToSavings = () => {
+    if (financialData.operationalPoolBalance <= 0) {
+      alert("Tidak ada sisa saldo di Pool Operasional untuk ditransfer.");
+      return;
     }
-  };
 
-  const handleAddPlay = () => {
-    const amount = parseInt(playInput.replace(/\D/g, ''));
-    if (!isNaN(amount) && amount > 0) {
-      const newTxs = [{
-        id: Date.now(),
-        name: 'Kantong Main',
-        amount: amount,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        date: new Date().toISOString().split('T')[0]
-      }, ...playTransactions];
-      
-      setPlayTransactions(newTxs);
-      localStorage.setItem('strategy_transactions', JSON.stringify(newTxs));
-      financialData.syncSheet && financialData.syncSheet('Strategy', newTxs).catch(console.error);
-      setPlayInput('');
+    const confirmTransfer = window.confirm(`Pindahkan sisa saldo Pool sebesar Rp ${financialData.formatCurrency(financialData.operationalPoolBalance)} ke dompet Tabungan (Gaji) dan reset kantong operasional?`);
+    if (!confirmTransfer) return;
+
+    // Create Expense from Pool
+    const expenseRecord = {
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      type: 'Expense',
+      category: 'Sapu Bersih Sisa Pool ke Tabungan',
+      amount: financialData.operationalPoolBalance,
+      notes: 'Transfer akhir bulan otomatis',
+      isPoolTransfer: true
+    };
+
+    const newRecords = [expenseRecord, ...cashflowRecords];
+    localStorage.setItem('cashflow_records', JSON.stringify(newRecords));
+    financialData.syncSheet && financialData.syncSheet('Cashflow', newRecords).catch(console.error);
+
+    // Add to Tabungan (Gaji)
+    const existingAccounts = financialData.accounts || [];
+    let gajiAccount = existingAccounts.find(a => a.name.toLowerCase() === 'gaji' && a.type === 'Savings');
+    
+    let newAccounts;
+    if (gajiAccount) {
+      newAccounts = existingAccounts.map(a => 
+        a.id === gajiAccount.id ? { ...a, value: a.value + financialData.operationalPoolBalance } : a
+      );
+    } else {
+      newAccounts = [
+        ...existingAccounts, 
+        { id: `acc_${Date.now()}`, type: 'Savings', name: 'Gaji', value: financialData.operationalPoolBalance, icon: 'savings', color: 'text-primary', border: 'border-primary/20' }
+      ];
     }
-  };
+    
+    financialData.setAccounts && financialData.setAccounts(newAccounts);
+    financialData.syncSheet && financialData.syncSheet('Accounts', newAccounts).catch(console.error);
+    
+    // Reset all pocket balances to 0 (Keep Target value intact)
+    const resetWallets = financialData.operationalWallets.map(w => ({ ...w, balance: 0 }));
+    financialData.setOperationalWallets && financialData.setOperationalWallets(resetWallets);
+    financialData.syncSheet && financialData.syncSheet('OperationalWallets', resetWallets).catch(console.error);
 
-  const handleDeletePlay = (id) => {
-    const newTxs = playTransactions.filter(tx => tx.id !== id);
-    setPlayTransactions(newTxs);
-    localStorage.setItem('strategy_transactions', JSON.stringify(newTxs));
-    financialData.syncSheet && financialData.syncSheet('Strategy', newTxs).catch(console.error);
+    alert("Berhasil menyapu bersih sisa Pool Operasional ke dompet Tabungan (Gaji)!");
+    window.location.reload();
   };
 
   return (
@@ -100,27 +85,48 @@ export default function Strategy({ financialData }) {
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-12 gap-gutter">
           
-          {/* Section 1: Wallet Status Grid (Col span 8) */}
-          <section className="col-span-12 xl:col-span-8 glass-panel rounded-xl p-container-padding flex flex-col h-full hover:shadow-[0_0_20px_rgba(78,222,163,0.05)] transition-shadow duration-300">
+          {/* Section 1: Wallet Status Grid (Col span 12) */}
+          <section className="col-span-12 glass-panel rounded-xl p-container-padding flex flex-col h-full hover:shadow-[0_0_20px_rgba(78,222,163,0.05)] transition-shadow duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-stack-md gap-4">
               <h3 className="text-headline-md font-headline-md text-slate-200 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">account_tree</span>
                 Alokasi Operasional
               </h3>
-              <div className="sm:text-right bg-slate-800/50 px-4 py-2 rounded-lg border border-white/10">
-                <p className="font-label-sm text-label-sm text-slate-300">Total Operasional Terkini</p>
-                <p className="font-display-sm text-2xl text-primary tracking-tight">Rp {financialData.formatCurrency(operationalBalance)}</p>
+              <div className="flex flex-col items-end gap-2">
+                <div className="bg-slate-800/50 px-4 py-2 rounded-lg border border-white/10 text-right">
+                  <p className="font-label-sm text-label-sm text-slate-300">Total Operasional Terkini</p>
+                  <p className="font-display-sm text-2xl text-slate-200 tracking-tight">Rp {financialData.formatCurrency(financialData.operationalBalance || 0)}</p>
+                </div>
               </div>
+            </div>
+
+            {/* Pool Status Widget */}
+            <div className="mb-stack-md bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <p className="font-label-sm text-label-sm text-primary mb-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[16px]">water_drop</span>
+                  Saldo Induk Operasional (Pool)
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-slate-200 tracking-tight">Rp {financialData.formatCurrency(financialData.operationalPoolBalance || 0)}</span>
+                  <span className="text-xs text-slate-400">Sisa belum dibagikan</span>
+                </div>
+              </div>
+              <button 
+                onClick={handleTransferToSavings}
+                disabled={!financialData.operationalPoolBalance || financialData.operationalPoolBalance <= 0}
+                className="w-full sm:w-auto bg-primary hover:bg-primary-fixed text-on-primary font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="material-symbols-outlined text-[18px]">cleaning_services</span>
+                Sapu Bersih ke Tabungan
+              </button>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 flex-1 content-start">
-              {operationalWallets && operationalWallets.map((wallet) => {
-                const automatedStatus = getAutomatedStatus(wallet.name);
-                const { containerClass, circleClass, label } = getToggleVisuals(automatedStatus);
-                
+              {financialData.operationalWallets && financialData.operationalWallets.map((wallet) => {
                 return (
                   <div key={wallet.id} className="bg-surface-container/50 border border-white/10 rounded-lg p-4 flex flex-col gap-3 transition-colors group hover:border-primary/50 relative overflow-hidden">
-                    {/* Visual indicator for automated sync */}
+                    {/* Visual indicator for static sync */}
                     <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     
                     <div className="flex justify-between items-start">
@@ -128,27 +134,45 @@ export default function Strategy({ financialData }) {
                         <span className="material-symbols-outlined text-lg text-primary/80 group-hover:text-primary transition-colors">{wallet.icon}</span>
                       </div>
                       
-                      {/* 3-State Automated Indicator */}
+                      {/* Status Manual Indicator */}
                       <div className="flex flex-col items-end gap-1">
                         <div 
-                          className={`w-10 h-4 rounded-full flex items-center p-0.5 relative border transition-colors duration-300 opacity-90 ${containerClass}`}
-                          title={`${label} (Otomatis dari Arus Kas)`}
+                          className={`w-10 h-4 rounded-full flex items-center p-0.5 relative border transition-colors duration-300 opacity-90 ${wallet.currentBalance > 0 ? 'bg-primary/20 border-primary/30' : 'bg-surface-variant/50 border-outline-variant/50'}`}
+                          title={wallet.currentBalance > 0 ? 'Ada Sisa Uang' : 'Habis/Kosong'}
                         >
-                          <div className={`w-3 h-3 rounded-full absolute transition-all duration-300 shadow-sm ${circleClass}`}></div>
+                          <div className={`w-3 h-3 rounded-full absolute transition-all duration-300 shadow-sm ${wallet.currentBalance > 0 ? 'bg-primary left-[50%] -translate-x-[50%]' : 'bg-outline left-0.5'}`}></div>
                         </div>
-                        <span className="text-[9px] text-slate-400 font-data-mono uppercase tracking-wider">{label}</span>
+                        <span className="text-[9px] text-slate-400 font-data-mono uppercase tracking-wider">{wallet.currentBalance > 0 ? 'Tersedia' : 'Habis'}</span>
                       </div>
                     </div>
                     <div>
-                      <div className="text-data-mono font-data-mono text-slate-200 group-hover:text-primary transition-colors truncate">{wallet.name}</div>
+                      <div className="flex justify-between items-baseline mb-1">
+                        <div className="text-data-mono font-data-mono text-slate-200 group-hover:text-primary transition-colors truncate">{wallet.name}</div>
+                        <div className="text-[10px] text-slate-500 font-data-mono" title="Target Budget Bulanan">Target: Rp {financialData.formatCurrency(wallet.value)}</div>
+                      </div>
+                      <div className="text-xs text-slate-400 flex justify-between items-center bg-surface-container-lowest/50 p-2 rounded-lg border border-white/5">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] uppercase tracking-widest opacity-60">Sisa Uang</span>
+                          <span className={`font-data-mono font-bold ${wallet.currentBalance <= 0 ? 'text-error' : 'text-primary'}`}>Rp {financialData.formatCurrency(wallet.currentBalance)}</span>
+                        </div>
+                        {wallet.spent > 0 && (
+                          <div className="flex flex-col items-end text-error opacity-90">
+                            <span className="text-[9px] uppercase tracking-widest opacity-60">Terpakai</span>
+                            <span className="font-data-mono font-bold">-Rp {financialData.formatCurrency(wallet.spent)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-auto">
+                    <div className="mt-auto pt-3 border-t border-white/5">
+                      <div className="text-[10px] text-slate-500 mb-1 flex items-center justify-between">
+                        <span>Isi Saldo (Top Up):</span>
+                      </div>
                       <div className="relative">
                         <span className="absolute left-2 top-1/2 -translate-y-1/2 font-data-mono text-[10px] text-slate-300">Rp</span>
                         <input 
-                          className="w-full bg-surface-container-lowest/50 border border-outline-variant text-primary font-data-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary rounded-md py-1.5 pl-6 pr-2 transition-all shadow-inner text-right" 
+                          className="w-full bg-slate-800/80 border border-outline-variant text-slate-200 font-data-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary rounded-md py-1.5 pl-6 pr-2 transition-all shadow-inner text-right" 
                           type="text" 
-                          value={wallet.value === 0 ? '' : wallet.value.toLocaleString('id-ID')}
+                          value={!wallet.balance || wallet.balance === 0 ? '' : wallet.balance.toLocaleString('id-ID')}
                           onChange={(e) => handleValueChange(wallet.id, e.target.value)}
                           placeholder="0" 
                         />
@@ -157,107 +181,6 @@ export default function Strategy({ financialData }) {
                   </div>
                 );
               })}
-            </div>
-          </section>
-          
-          {/* Section 2: Monthly Play Tracker (Col span 4) */}
-          <section className="col-span-12 xl:col-span-4 glass-panel rounded-xl p-container-padding flex flex-col h-full hover:shadow-[0_0_20px_rgba(234,179,8,0.05)] transition-shadow duration-300">
-            <h3 className="text-headline-md font-headline-md text-slate-200 flex items-center gap-2 mb-stack-md">
-              <span className="material-symbols-outlined text-[#eab308]">sports_esports</span>
-              Batas Main Bulanan
-            </h3>
-            
-            <div className="mb-stack-lg">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-2 gap-1">
-                <div className={`text-3xl sm:text-4xl font-bold tracking-tight ${isPlayOverBudget ? 'text-error' : 'text-[#eab308]'}`}>
-                  Rp {financialData.formatCurrency(totalPlaySpent)}
-                </div>
-                <div className="text-data-mono font-data-mono text-slate-500 text-sm md:text-base mb-1">/ Rp {financialData.formatCurrency(monthlyPlayBudget)}</div>
-              </div>
-              {/* Progress Bar */}
-              <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden mt-4 border border-white/10">
-                <div className={`h-full rounded-full transition-all duration-500 ${isPlayOverBudget ? 'bg-error shadow-[0_0_10px_rgba(255,180,171,0.5)] w-full' : 'bg-gradient-to-r from-[#eab308] to-orange-400 shadow-[0_0_10px_rgba(234,179,8,0.5)]'}`} style={{ width: isPlayOverBudget ? '100%' : `${(totalPlaySpent / monthlyPlayBudget) * 100}%` }}></div>
-              </div>
-              
-              <div className={`mt-3 flex items-center gap-2 bg-surface-container/50 inline-flex px-3 py-1.5 rounded-full border border-white/10`}>
-                <span className="text-[10px]">{isPlayOverBudget ? '🔴' : '🟡'}</span>
-                <span className={`text-label-sm font-label-sm ${isPlayOverBudget ? 'text-error' : 'text-[#eab308]'}`}>
-                  {isPlayOverBudget ? `Over Rp ${financialData.formatCurrency(Math.abs(remainingPlayBudget))}` : `Sisa Rp ${financialData.formatCurrency(remainingPlayBudget)}`}
-                </span>
-              </div>
-            </div>
-            
-            {/* Quick Play Inputs */}
-            <div className="mb-4 space-y-2 flex-1">
-              <div className="text-label-sm font-label-sm text-slate-500">Bulan ini:</div>
-              {playTransactions.map(tx => (
-                <div key={tx.id} className="flex justify-between items-center text-sm py-1 border-b border-white/5">
-                  <span className="text-slate-300">{tx.name}</span>
-                  <div className="text-right">
-                    <span className="block text-slate-200">Rp {financialData.formatCurrency(tx.amount)}</span>
-                    <span className="block text-xs text-slate-500">{tx.time}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-auto">
-              <div className="text-label-sm font-label-sm text-slate-500 mb-2">Input Cepat (Main)</div>
-              <div className="flex gap-2 relative">
-                <input 
-                  value={playInput}
-                  onChange={(e) => setPlayInput(e.target.value)}
-                  className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2 text-data-mono font-data-mono text-slate-200 focus:outline-none focus:border-secondary-container focus:ring-1 focus:ring-secondary-container transition-all" 
-                  placeholder="Nominal..." 
-                  type="text" 
-                />
-                <button onClick={handleAddPlay} className="bg-slate-800 border border-outline-variant hover:border-[#eab308] text-[#eab308] px-4 py-2 rounded-lg transition-colors flex items-center justify-center">
-                  <span className="material-symbols-outlined text-sm">add</span>
-                </button>
-              </div>
-            </div>
-          </section>
-          
-          {/* Section 3: Lifestyle Tracker Transaction List (Full Width under) */}
-          <section className="col-span-12 glass-panel rounded-xl p-container-padding hover:shadow-[0_0_20px_rgba(78,222,163,0.05)] transition-shadow duration-300">
-            <div className="flex items-center justify-between mb-stack-md border-b border-white/10 pb-4">
-              <h3 className="text-headline-md font-headline-md text-slate-200 flex items-center gap-2">
-                <span className="material-symbols-outlined text-secondary">sports_esports</span>
-                Riwayat Transaksi Kantong Main
-              </h3>
-              <div className="flex gap-2">
-                <button className="bg-surface-container text-slate-200 text-label-sm font-label-sm px-3 py-1.5 rounded border border-outline-variant/50 hover:bg-surface-bright transition-colors">Filter</button>
-                <button className="bg-surface-container text-slate-200 text-label-sm font-label-sm px-3 py-1.5 rounded border border-outline-variant/50 hover:bg-surface-bright transition-colors">Ekspor</button>
-              </div>
-            </div>
-            
-            <div className="space-y-1">
-              {playTransactions.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">Belum ada transaksi main.</div>
-              ) : (
-                playTransactions.map(tx => (
-                  <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg hover:bg-surface-container/50 transition-colors border border-transparent hover:border-white/10 group gap-2">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/20 flex items-center justify-center text-secondary flex-shrink-0">
-                        <span className="material-symbols-outlined">sports_esports</span>
-                      </div>
-                      <div>
-                        <div className="text-data-mono font-data-mono text-slate-200 group-hover:text-secondary transition-colors">{tx.name}</div>
-                        <div className="text-label-sm font-label-sm text-slate-500">{tx.date || 'Today'}, {tx.time}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pl-14 sm:pl-0">
-                      <div className="text-data-mono font-data-mono text-error">- Rp {financialData.formatCurrency(tx.amount)}</div>
-                      <button 
-                        onClick={() => handleDeletePlay(tx.id)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-error/20 hover:text-error transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
             </div>
           </section>
           
