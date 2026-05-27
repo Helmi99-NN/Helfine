@@ -122,59 +122,45 @@ export default function Strategy({ financialData }) {
               </button>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 flex-1 content-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1 content-start">
               {financialData.operationalWallets && financialData.operationalWallets.map((wallet) => {
                 return (
-                  <div key={wallet.id} className="bg-surface-container/50 border border-white/10 rounded-lg p-4 flex flex-col gap-3 transition-colors group hover:border-primary/50 relative overflow-hidden">
-                    {/* Visual indicator for static sync */}
-                    <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    
-                    <div className="flex justify-between items-start">
-                      <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-white/5 group-hover:bg-primary/10">
-                        <span className="material-symbols-outlined text-lg text-primary/80 group-hover:text-primary transition-colors">{wallet.icon}</span>
-                      </div>
-                      
-                      {/* Status Manual Indicator */}
-                      <div className="flex flex-col items-end gap-1">
-                        <div 
-                          className={`w-10 h-4 rounded-full flex items-center p-0.5 relative border transition-colors duration-300 opacity-90 ${wallet.currentBalance > 0 ? 'bg-primary/20 border-primary/30' : 'bg-surface-variant/50 border-outline-variant/50'}`}
-                          title={wallet.currentBalance > 0 ? 'Ada Sisa Uang' : 'Habis/Kosong'}
-                        >
-                          <div className={`w-3 h-3 rounded-full absolute transition-all duration-300 shadow-sm ${wallet.currentBalance > 0 ? 'bg-primary left-[50%] -translate-x-[50%]' : 'bg-outline left-0.5'}`}></div>
+                  <div key={wallet.id} className="bg-surface-container-lowest border border-outline-variant/60 rounded-2xl p-5 flex flex-col relative overflow-hidden shadow-sm hover:shadow-md hover:border-primary/40 transition-all group">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${wallet.currentBalance > 0 ? 'bg-primary/10 text-primary' : 'bg-slate-500/10 text-slate-500 group-hover:bg-primary/5 group-hover:text-primary/70'}`}>
+                          <span className="material-symbols-outlined text-[24px]">{wallet.icon}</span>
                         </div>
-                        <span className="text-[9px] text-slate-400 font-data-mono uppercase tracking-wider">{wallet.currentBalance > 0 ? 'Tersedia' : 'Habis'}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between items-baseline mb-1">
-                        <div className="text-data-mono font-data-mono text-slate-200 group-hover:text-primary transition-colors truncate">{wallet.name}</div>
-                        <div className="text-[10px] text-slate-500 font-data-mono" title="Target Budget Bulanan">Target: Rp {financialData.formatCurrency(wallet.value)}</div>
-                      </div>
-                      <div className="text-xs text-slate-400 flex justify-between items-center bg-surface-container-lowest/50 p-2 rounded-lg border border-white/5">
-                        <div className="flex flex-col">
-                          <span className="text-[9px] uppercase tracking-widest opacity-60">Sisa Uang</span>
-                          <span className={`font-data-mono font-bold ${wallet.currentBalance <= 0 ? 'text-error' : 'text-primary'}`}>Rp {financialData.formatCurrency(wallet.currentBalance)}</span>
+                        <div>
+                          <h4 className="font-bold text-slate-200 text-base">{wallet.name}</h4>
+                          <p className="text-[11px] text-slate-400 font-data-mono">Target: Rp {financialData.formatCurrency(wallet.value)}</p>
                         </div>
-                        {wallet.spent > 0 && (
-                          <div className="flex flex-col items-end text-error opacity-90">
-                            <span className="text-[9px] uppercase tracking-widest opacity-60">Terpakai</span>
-                            <span className="font-data-mono font-bold">-Rp {financialData.formatCurrency(wallet.spent)}</span>
-                          </div>
-                        )}
                       </div>
+                      <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${wallet.currentBalance > 0 ? 'bg-primary shadow-[0_0_8px_rgba(78,222,163,0.6)]' : 'bg-slate-600'}`}></div>
                     </div>
-                    <div className="mt-auto pt-3 border-t border-white/5">
-                      <div className="text-[10px] text-slate-500 mb-1 flex items-center justify-between">
-                        <span>Isi Saldo (Top Up):</span>
-                      </div>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 font-data-mono text-[10px] text-slate-300">Rp</span>
+
+                    <div className="mb-6">
+                      <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Sisa Saldo</p>
+                      <p className={`text-3xl font-bold tracking-tight font-data-mono ${wallet.currentBalance <= 0 ? 'text-error' : 'text-slate-200'}`}>
+                        Rp {financialData.formatCurrency(wallet.currentBalance)}
+                      </p>
+                      {wallet.spent > 0 && (
+                        <p className="text-xs text-error font-data-mono mt-1 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
+                          Rp {financialData.formatCurrency(wallet.spent)} terpakai
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-outline-variant/30">
+                      <div className="relative w-full">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-data-mono text-xs text-slate-400">Rp</span>
                         <input 
-                          className="w-full bg-slate-800/80 border border-outline-variant text-slate-200 font-data-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary rounded-md py-1.5 pl-6 pr-2 transition-all shadow-inner text-right" 
+                          className="w-full bg-surface-container/30 border border-outline-variant/50 text-slate-200 font-data-mono text-sm focus:border-primary focus:bg-surface-container focus:ring-1 focus:ring-primary rounded-xl py-2 pl-9 pr-3 transition-all shadow-inner text-right placeholder-slate-500" 
                           type="text" 
                           value={!wallet.balance || wallet.balance === 0 ? '' : wallet.balance.toLocaleString('id-ID')}
                           onChange={(e) => handleValueChange(wallet.id, e.target.value)}
-                          placeholder="0" 
+                          placeholder="Top Up Saldo" 
                         />
                       </div>
                     </div>

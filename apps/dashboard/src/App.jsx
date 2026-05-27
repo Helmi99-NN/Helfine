@@ -191,9 +191,21 @@ function App() {
   // Sisa Saldo Induk (Pool) yang belum dibagikan
   const operationalPoolBalance = totalPoolIn - totalPoolTransferOut - totalAllocated;
 
-  // Grand Total Operasional = (Dana di Kantong + Sisa di Pool) - Pengeluaran Kantong
-  // Secara matematis: (totalAllocated + operationalPoolBalance) - totalOperationalExpenses
-  const operationalBalance = (totalAllocated + operationalPoolBalance) - totalOperationalExpenses;
+  // Hitung Sisa Saldo Operasional berdasarkan Metode Pembayaran
+  const operationalBalanceCash = 
+    cashflowRecords.filter(r => r.type === 'Income' && r.isOperationalPool && r.paymentMethod === 'Cash').reduce((sum, r) => sum + r.amount, 0)
+    - cashflowRecords.filter(r => r.type === 'Expense' && r.paymentMethod === 'Cash').reduce((sum, r) => sum + r.amount, 0)
+    + cashflowRecords.filter(r => r.type === 'Transfer' && r.transferDirection === 'ToCash').reduce((sum, r) => sum + r.amount, 0)
+    - cashflowRecords.filter(r => r.type === 'Transfer' && r.transferDirection === 'ToEmoney').reduce((sum, r) => sum + r.amount, 0);
+
+  const operationalBalanceEmoney = 
+    cashflowRecords.filter(r => r.type === 'Income' && r.isOperationalPool && (r.paymentMethod === 'Saldo' || !r.paymentMethod)).reduce((sum, r) => sum + r.amount, 0)
+    - cashflowRecords.filter(r => r.type === 'Expense' && (r.paymentMethod === 'Saldo' || !r.paymentMethod)).reduce((sum, r) => sum + r.amount, 0)
+    + cashflowRecords.filter(r => r.type === 'Transfer' && r.transferDirection === 'ToEmoney').reduce((sum, r) => sum + r.amount, 0)
+    - cashflowRecords.filter(r => r.type === 'Transfer' && r.transferDirection === 'ToCash').reduce((sum, r) => sum + r.amount, 0);
+
+  // Grand Total Operasional tetap ada untuk aset
+  const operationalBalance = operationalBalanceCash + operationalBalanceEmoney;
   
   const totalAssets = totalInvestasi + totalTabungan + operationalBalance;
 
@@ -213,6 +225,8 @@ function App() {
     operationalWallets: walletsWithBalance,
     setOperationalWallets,
     operationalBalance,
+    operationalBalanceCash,
+    operationalBalanceEmoney,
     operationalPoolBalance,
     totalInvestasi,
     totalTabungan,

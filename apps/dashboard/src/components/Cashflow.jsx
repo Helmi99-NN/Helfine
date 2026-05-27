@@ -16,8 +16,9 @@ export default function Cashflow({ financialData }) {
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [isOperationalPool, setIsOperationalPool] = useState(true); // Default dicentang untuk Income
+  const [isOperationalPool, setIsOperationalPool] = useState(false); // Default tidak dicentang untuk Income
   const [paymentMethod, setPaymentMethod] = useState('Cash'); // 'Cash' or 'Saldo'
+  const [transferDirection, setTransferDirection] = useState('ToCash'); // 'ToCash' (E-Money -> Cash) or 'ToEmoney' (Cash -> E-Money)
 
   // Filtering State
   const [filterStartDate, setFilterStartDate] = useState(() => {
@@ -30,7 +31,8 @@ export default function Cashflow({ financialData }) {
   const amountRef = useRef(null);
 
   const handleAddRecord = () => {
-    if (!category || !amount) return;
+    if (type !== 'Transfer' && !category) return;
+    if (!amount) return;
     
     const parsedAmount = parseFloat(amount.replace(/\D/g, ''));
     if (isNaN(parsedAmount) || parsedAmount <= 0) return;
@@ -39,11 +41,12 @@ export default function Cashflow({ financialData }) {
       id: Date.now(),
       date,
       type,
-      category,
+      category: type === 'Transfer' ? (transferDirection === 'ToCash' ? 'Tarik Tunai' : 'Setor Tunai') : category,
       amount: parsedAmount,
       notes,
-      isOperationalPool: type === 'Income' ? isOperationalPool : false,
-      paymentMethod: type === 'Expense' ? paymentMethod : null
+      isOperationalPool: type === 'Income' ? isOperationalPool : (type === 'Transfer' ? true : false),
+      paymentMethod: (type === 'Expense' || isOperationalPool) ? paymentMethod : null,
+      transferDirection: type === 'Transfer' ? transferDirection : null
     };
 
     const newRecords = [newRecord, ...records];
@@ -52,7 +55,7 @@ export default function Cashflow({ financialData }) {
     financialData.syncSheet && financialData.syncSheet('Cashflow', newRecords).catch(console.error);
     
     // Auto-Sync with Portofolio (Savings/Equity)
-    if (!newRecord.isOperationalPool) {
+    if (type !== 'Transfer' && !newRecord.isOperationalPool) {
       const existingAccounts = financialData.accounts || [];
       let accountChanged = false;
       const newAccounts = existingAccounts.map(acc => {
@@ -90,7 +93,7 @@ export default function Cashflow({ financialData }) {
     financialData.syncSheet && financialData.syncSheet('Cashflow', newRecords).catch(console.error);
 
     // Undo Sync with Portofolio
-    if (recordToDelete && !recordToDelete.isOperationalPool) {
+    if (recordToDelete && recordToDelete.type !== 'Transfer' && !recordToDelete.isOperationalPool) {
       const existingAccounts = financialData.accounts || [];
       let accountChanged = false;
       const newAccounts = existingAccounts.map(acc => {
@@ -210,7 +213,7 @@ export default function Cashflow({ financialData }) {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="glass-card rounded-xl p-6 flex flex-col justify-between">
             <h3 className="text-label-sm font-data-mono text-slate-500 uppercase tracking-wider mb-2">Total Pendapatan Terfilter</h3>
             <div className="text-2xl md:text-3xl font-bold tracking-tight text-primary">
@@ -227,6 +230,23 @@ export default function Cashflow({ financialData }) {
             <h3 className="text-label-sm font-data-mono text-slate-500 uppercase tracking-wider mb-2">Net Cashflow</h3>
             <div className={`text-2xl md:text-3xl font-bold tracking-tight ${netCashflow >= 0 ? 'text-primary' : 'text-error'}`}>
               Rp {formatCurrency(netCashflow)}
+            </div>
+          </div>
+          <div className="glass-card rounded-xl p-4 flex flex-col justify-between bg-primary/5 border border-primary/20">
+            <h3 className="text-[10px] font-data-mono text-primary/80 uppercase tracking-wider mb-2">Sisa Saldo Operasional</h3>
+            <div className="flex flex-col gap-1">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-400">Cash:</span>
+                <span className={`font-data-mono font-bold ${financialData.operationalBalanceCash >= 0 ? 'text-primary' : 'text-error'}`}>
+                  Rp {formatCurrency(financialData.operationalBalanceCash)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-400">E-Money:</span>
+                <span className={`font-data-mono font-bold ${financialData.operationalBalanceEmoney >= 0 ? 'text-primary' : 'text-error'}`}>
+                  Rp {formatCurrency(financialData.operationalBalanceEmoney)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -257,6 +277,13 @@ export default function Cashflow({ financialData }) {
                     <span className="material-symbols-outlined text-sm">arrow_upward</span>
                     Pengeluaran
                   </button>
+                  <button 
+                    onClick={() => setType('Transfer')}
+                    className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${type === 'Transfer' ? 'bg-secondary/20 text-secondary border border-secondary/30 shadow-[0_0_10px_rgba(167,139,250,0.2)]' : 'text-slate-500 hover:text-slate-200 hover:bg-surface-container/50'}`}
+                  >
+                    <span className="material-symbols-outlined text-sm">sync_alt</span>
+                    Transfer
+                  </button>
                 </div>
               </div>
 
@@ -275,88 +302,114 @@ export default function Cashflow({ financialData }) {
                 </div>
               </div>
               
-              <div>
-                <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Kategori / Nama</label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm z-10">category</span>
-                  
-                  {isCustomCategory ? (
-                    <div className="flex w-full gap-2">
-                      <input 
-                        ref={catRef}
-                        type="text" 
-                        value={category} 
-                        onChange={(e) => setCategory(e.target.value)}
-                        onKeyDown={(e) => handleEnter(e, amountRef)}
-                        placeholder="Ketik nama kategori..."
-                        className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
-                        autoFocus
-                      />
-                      <button 
-                        onClick={() => { setIsCustomCategory(false); setCategory(''); }}
-                        className="bg-surface-container-high hover:bg-surface-variant flex items-center justify-center px-3 rounded-xl border border-outline-variant text-slate-400 hover:text-error transition-colors"
-                        title="Batal custom kategori"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <select
-                        ref={catRef}
-                        value={category}
-                        onChange={(e) => {
-                          if (e.target.value === 'LAINNYA') {
-                            setIsCustomCategory(true);
-                            setCategory('');
-                          } else {
-                            setCategory(e.target.value);
-                          }
-                        }}
-                        onKeyDown={(e) => handleEnter(e, amountRef)}
-                        className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 pr-10 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner appearance-none cursor-pointer [color-scheme:dark]" 
-                      >
-                        <option value="" disabled>Pilih Kategori...</option>
-                        {/* Operational Wallets */}
-                        {financialData.operationalWallets && financialData.operationalWallets.length > 0 && (
-                          <optgroup label="Alokasi Operasional">
-                            {financialData.operationalWallets.map(w => (
-                              <option key={w.id} value={w.name}>{w.name}</option>
-                            ))}
-                          </optgroup>
-                        )}
-                        
-                        {/* Portofolio Accounts */}
-                        {financialData.accounts && financialData.accounts.length > 0 && (
-                          <optgroup label="Portofolio (Tabungan & Investasi)">
-                            {financialData.accounts.map(acc => (
-                              <option key={acc.id} value={acc.name}>{acc.name} - Rp{formatCurrency(acc.value)}</option>
-                            ))}
-                          </optgroup>
-                        )}
-                        
-                        <optgroup label="Lainnya">
-                          {type === 'Income' ? (
-                            <>
-                              <option value="Gaji">Gaji</option>
-                              <option value="Bonus">Bonus</option>
-                              <option value="Hasil Investasi">Hasil Investasi</option>
-                            </>
-                          ) : (
-                            <>
-                              <option value="Tagihan">Tagihan (Listrik, Air)</option>
-                              <option value="Belanja Bulanan">Belanja Bulanan</option>
-                              <option value="Kesehatan">Kesehatan</option>
-                            </>
+              {type !== 'Transfer' && (
+                <div>
+                  <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Kategori / Nama</label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm z-10">category</span>
+                    
+                    {isCustomCategory ? (
+                      <div className="flex w-full gap-2">
+                        <input 
+                          ref={catRef}
+                          type="text" 
+                          value={category} 
+                          onChange={(e) => setCategory(e.target.value)}
+                          onKeyDown={(e) => handleEnter(e, amountRef)}
+                          placeholder="Ketik nama kategori..."
+                          className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
+                          autoFocus
+                        />
+                        <button 
+                          onClick={() => { setIsCustomCategory(false); setCategory(''); }}
+                          className="bg-surface-container-high hover:bg-surface-variant flex items-center justify-center px-3 rounded-xl border border-outline-variant text-slate-400 hover:text-error transition-colors"
+                          title="Batal custom kategori"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <select
+                          ref={catRef}
+                          value={category}
+                          onChange={(e) => {
+                            if (e.target.value === 'LAINNYA') {
+                              setIsCustomCategory(true);
+                              setCategory('');
+                            } else {
+                              setCategory(e.target.value);
+                            }
+                          }}
+                          onKeyDown={(e) => handleEnter(e, amountRef)}
+                          className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 pr-10 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner appearance-none cursor-pointer [color-scheme:dark]" 
+                        >
+                          <option value="" disabled>Pilih Kategori...</option>
+                          {/* Operational Wallets */}
+                          {financialData.operationalWallets && financialData.operationalWallets.length > 0 && (
+                            <optgroup label="Alokasi Operasional">
+                              {financialData.operationalWallets.map(w => (
+                                <option key={w.id} value={w.name}>{w.name}</option>
+                              ))}
+                            </optgroup>
                           )}
-                          <option value="LAINNYA">+ Ketik Kategori Lainnya...</option>
-                        </optgroup>
-                      </select>
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">expand_more</span>
-                    </>
-                  )}
+                          
+                          {/* Portofolio Accounts */}
+                          {financialData.accounts && financialData.accounts.length > 0 && (
+                            <optgroup label="Portofolio (Tabungan & Investasi)">
+                              {financialData.accounts.map(acc => (
+                                <option key={acc.id} value={acc.name}>{acc.name} - Rp{formatCurrency(acc.value)}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                          
+                          <optgroup label="Lainnya">
+                            {type === 'Income' ? (
+                              <>
+                                <option value="Gaji">Gaji</option>
+                                <option value="Bonus">Bonus</option>
+                                <option value="Hasil Investasi">Hasil Investasi</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="Tagihan">Tagihan (Listrik, Air)</option>
+                                <option value="Belanja Bulanan">Belanja Bulanan</option>
+                                <option value="Kesehatan">Kesehatan</option>
+                              </>
+                            )}
+                            <option value="LAINNYA">+ Ketik Kategori Lainnya...</option>
+                          </optgroup>
+                        </select>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">expand_more</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {type === 'Transfer' && (
+                <div>
+                  <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Arah Transfer</label>
+                  <div className="flex gap-3">
+                    <label className={`flex-1 flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all ${transferDirection === 'ToCash' ? 'bg-secondary/10 border-secondary/50 text-secondary' : 'border-outline-variant text-slate-400 hover:bg-surface-variant/30'}`}>
+                      <input type="radio" name="direction" value="ToCash" checked={transferDirection === 'ToCash'} onChange={() => setTransferDirection('ToCash')} className="hidden" />
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="material-symbols-outlined text-[18px]">payments</span>
+                        <span className="text-sm font-medium">Tarik Tunai</span>
+                      </div>
+                      <span className="text-[10px] opacity-70">(E-Money → Cash)</span>
+                    </label>
+                    <label className={`flex-1 flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all ${transferDirection === 'ToEmoney' ? 'bg-secondary/10 border-secondary/50 text-secondary' : 'border-outline-variant text-slate-400 hover:bg-surface-variant/30'}`}>
+                      <input type="radio" name="direction" value="ToEmoney" checked={transferDirection === 'ToEmoney'} onChange={() => setTransferDirection('ToEmoney')} className="hidden" />
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                        <span className="text-sm font-medium">Setor Tunai</span>
+                      </div>
+                      <span className="text-[10px] opacity-70">(Cash → E-Money)</span>
+                    </label>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Nominal (Rp)</label>
@@ -396,9 +449,11 @@ export default function Cashflow({ financialData }) {
                 </div>
               </div>
 
-              {type === 'Expense' && (
+              {(type === 'Expense' || (type === 'Income' && isOperationalPool)) && (
                 <div>
-                  <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Metode Pembayaran</label>
+                  <label className="block text-label-sm font-label-sm text-slate-500 mb-2">
+                    {type === 'Income' ? 'Uang Masuk ke' : 'Metode Pembayaran'}
+                  </label>
                   <div className="flex gap-3">
                     <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'Cash' ? 'bg-[#FDE047]/10 border-[#FDE047]/50 text-[#FDE047]' : 'border-outline-variant text-slate-400 hover:bg-surface-variant/30'}`}>
                       <input type="radio" name="payment" value="Cash" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} className="hidden" />
@@ -408,7 +463,7 @@ export default function Cashflow({ financialData }) {
                     <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'Saldo' ? 'bg-[#FDE047]/10 border-[#FDE047]/50 text-[#FDE047]' : 'border-outline-variant text-slate-400 hover:bg-surface-variant/30'}`}>
                       <input type="radio" name="payment" value="Saldo" checked={paymentMethod === 'Saldo'} onChange={() => setPaymentMethod('Saldo')} className="hidden" />
                       <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
-                      <span className="text-sm font-medium">Saldo</span>
+                      <span className="text-sm font-medium">E-Money</span>
                     </label>
                   </div>
                 </div>
@@ -429,84 +484,97 @@ export default function Cashflow({ financialData }) {
 
             <button 
               onClick={handleAddRecord} 
-              disabled={!category || !amount}
-              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold ${(!category || !amount) ? 'bg-surface-container text-slate-500 cursor-not-allowed' : type === 'Income' ? 'bg-primary text-on-primary hover:bg-primary-fixed shadow-[0_0_15px_rgba(78,222,163,0.3)]' : 'bg-[#FDE047] text-slate-900 hover:bg-[#FEF08A] shadow-[0_0_15px_rgba(253,224,71,0.3)]'}`}
-            >
-              <span className="material-symbols-outlined text-sm">save</span>
+              disabled={(!category && type !== 'Transfer') || !amount}
+                  <span className="material-symbols-outlined text-sm">save</span>
               Simpan Transaksi
             </button>
           </section>
 
-          {/* Table Panel */}
-          <section className="col-span-12 lg:col-span-8 glass-panel rounded-xl p-0 flex flex-col overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.2)]">
-            <div className="p-6 border-b border-white/5 bg-surface-container/20">
-              <h3 className="text-headline-sm font-headline-sm text-slate-200 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">receipt_long</span>
-                Riwayat Arus Kas
-              </h3>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[600px]">
-                <thead>
-                  <tr className="border-b border-white/10 text-slate-500 text-xs font-data-mono uppercase tracking-wider bg-surface-container/20">
-                    <th className="p-4 font-medium">Tanggal</th>
-                    <th className="p-4 font-medium">Jenis</th>
-                    <th className="p-4 font-medium">Kategori</th>
-                    <th className="p-4 font-medium text-right">Nominal</th>
-                    <th className="p-4 font-medium text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant/10 text-sm">
-                  {filteredRecords.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="p-16 text-center text-slate-500">
-                        <div className="flex flex-col items-center justify-center opacity-80">
-                          <span className="material-symbols-outlined text-6xl mb-4 text-slate-600">account_balance_wallet</span>
-                          <p className="text-lg font-medium text-slate-300">Belum Ada Arus Kas</p>
-                          <p className="text-sm mt-1 text-slate-500">Tidak ada catatan yang ditemukan untuk rentang tanggal ini.</p>
+          {/* Tables Panel (Grouped by Category) */}
+          <section className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+            {filteredRecords.length === 0 ? (
+              <div className="glass-panel rounded-xl p-16 flex flex-col items-center justify-center opacity-80 shadow-[0_0_20px_rgba(0,0,0,0.2)]">
+                <span className="material-symbols-outlined text-6xl mb-4 text-slate-600">account_balance_wallet</span>
+                <p className="text-lg font-medium text-slate-300">Belum Ada Arus Kas</p>
+                <p className="text-sm mt-1 text-slate-500">Tidak ada catatan yang ditemukan untuk rentang tanggal ini.</p>
+              </div>
+            ) : (
+              (() => {
+                // Group by Category
+                const grouped = filteredRecords.reduce((acc, r) => {
+                  if (!acc[r.category]) {
+                    acc[r.category] = { name: r.category, type: r.type, total: 0, records: [] };
+                  }
+                  acc[r.category].total += r.amount;
+                  acc[r.category].records.push(r);
+                  return acc;
+                }, {});
+                
+                const categories = Object.values(grouped).sort((a, b) => {
+                  // Sort Income first, then by total amount descending
+                  if (a.type !== b.type) return a.type === 'Income' ? -1 : 1;
+                  return b.total - a.total;
+                });
+
+                return categories.map(cat => (
+                  <div key={cat.name} className="glass-panel rounded-xl p-0 flex flex-col overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.2)] border border-white/5">
+                    <div className="p-4 border-b border-white/5 bg-surface-container/20 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${cat.type === 'Income' ? 'bg-primary/10 text-primary' : 'bg-[#FDE047]/10 text-[#FDE047]'}`}>
+                          <span className="material-symbols-outlined text-[16px]">{cat.type === 'Income' ? 'arrow_downward' : 'arrow_upward'}</span>
                         </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredRecords.sort((a,b) => new Date(b.date) - new Date(a.date)).map(record => (
-                      <tr key={record.id} className="hover:bg-surface-container/20 transition-colors group">
-                        <td className="p-4 text-slate-200 whitespace-nowrap">{new Date(record.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})}</td>
-                        <td className="p-4">
-                          <div className={`text-[10px] px-2 py-0.5 rounded border uppercase tracking-widest inline-flex items-center gap-1 font-bold ${record.type === 'Income' ? 'border-primary/30 text-primary bg-primary/10' : 'border-[#FDE047]/30 text-[#FDE047] bg-[#FDE047]/10'}`}>
-                            <span className="material-symbols-outlined text-[12px]">
-                              {record.type === 'Income' ? 'arrow_downward' : 'arrow_upward'}
-                            </span>
-                            {record.type === 'Income' ? 'Pemasukan' : 'Pengeluaran'}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-medium text-slate-200">{record.category}</div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {record.paymentMethod && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30 text-slate-400 uppercase tracking-widest">{record.paymentMethod}</span>
-                            )}
-                            {record.notes && <span className="text-xs text-slate-400">{record.notes}</span>}
-                          </div>
-                        </td>
-                        <td className={`p-4 text-right font-data-mono font-bold ${record.type === 'Income' ? 'text-primary' : 'text-[#FDE047]'}`}>
-                          {record.type === 'Income' ? '+' : '-'}Rp {formatCurrency(record.amount)}
-                        </td>
-                        <td className="p-4 text-center">
-                          <button 
-                            onClick={() => handleDelete(record.id)}
-                            className="text-slate-500 hover:text-error transition-colors p-1 opacity-0 group-hover:opacity-100"
-                            title="Hapus"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        <h3 className="text-headline-sm font-headline-sm text-slate-200">{cat.name}</h3>
+                      </div>
+                      <div className={`font-data-mono font-bold text-lg ${cat.type === 'Income' ? 'text-primary' : 'text-[#FDE047]'}`}>
+                        {cat.type === 'Income' ? '+' : '-'}Rp {formatCurrency(cat.total)}
+                      </div>
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[500px]">
+                        <thead>
+                          <tr className="border-b border-white/10 text-slate-500 text-[10px] font-data-mono uppercase tracking-widest bg-surface-container-lowest/30">
+                            <th className="p-3 pl-4 font-medium w-32">Tanggal</th>
+                            <th className="p-3 font-medium">Keterangan</th>
+                            <th className="p-3 font-medium text-right w-40">Nominal</th>
+                            <th className="p-3 font-medium text-center w-16">Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-outline-variant/10 text-sm">
+                          {cat.records.sort((a,b) => new Date(b.date) - new Date(a.date)).map(record => (
+                            <tr key={record.id} className="hover:bg-surface-container/20 transition-colors group">
+                              <td className="p-3 pl-4 text-slate-300 font-data-mono text-xs whitespace-nowrap">
+                                {new Date(record.date).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'})}
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-2">
+                                  {record.paymentMethod && (
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30 text-slate-400 uppercase tracking-widest">{record.paymentMethod}</span>
+                                  )}
+                                  <span className="text-slate-300 text-sm">{record.notes || '-'}</span>
+                                </div>
+                              </td>
+                              <td className="p-3 text-right font-data-mono text-slate-200">
+                                Rp {formatCurrency(record.amount)}
+                              </td>
+                              <td className="p-3 text-center">
+                                <button 
+                                  onClick={() => handleDelete(record.id)}
+                                  className="text-slate-500 hover:text-error transition-colors p-1 opacity-0 group-hover:opacity-100"
+                                  title="Hapus"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ));
+              })()
+            )}
           </section>
         </div>
       </div>
