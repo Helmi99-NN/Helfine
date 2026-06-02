@@ -10,6 +10,14 @@ export default function Cashflow({ financialData }) {
     return [];
   });
 
+  const [customCategories, setCustomCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_categories');
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return [];
+  });
+
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [type, setType] = useState('Income'); // 'Income' or 'Expense'
   const [category, setCategory] = useState('');
@@ -19,6 +27,8 @@ export default function Cashflow({ financialData }) {
   const [isOperationalPool, setIsOperationalPool] = useState(false); // Default tidak dicentang untuk Income
   const [paymentMethod, setPaymentMethod] = useState('Cash'); // 'Cash' or 'Saldo'
   const [transferDirection, setTransferDirection] = useState('ToCash'); // 'ToCash' (E-Money -> Cash) or 'ToEmoney' (Cash -> E-Money)
+
+  const [editingRecordId, setEditingRecordId] = useState(null);
 
   // Filtering State
   const [filterStartDate, setFilterStartDate] = useState(() => {
@@ -77,12 +87,126 @@ export default function Cashflow({ financialData }) {
       }
     }
 
+    // Save custom category if new
+    if (type !== 'Transfer' && newRecord.category) {
+      const standardCategories = ['Gaji', 'Bonus', 'Hasil Investasi', 'Tagihan', 'Belanja Bulanan', 'Kesehatan'];
+      const accountNames = (financialData.accounts || []).map(a => a.name);
+      const walletNames = (financialData.operationalWallets || []).map(w => w.name);
+      
+      if (!standardCategories.includes(newRecord.category) && !accountNames.includes(newRecord.category) && !walletNames.includes(newRecord.category) && !customCategories.includes(newRecord.category)) {
+        const newCustomCats = [...customCategories, newRecord.category];
+        setCustomCategories(newCustomCats);
+        localStorage.setItem('custom_categories', JSON.stringify(newCustomCats));
+      }
+    }
+
     // Reset form
     setCategory('');
     setIsCustomCategory(false);
     setAmount('');
     setNotes('');
     catRef.current?.focus();
+  };
+
+  const handleEditClick = (record) => {
+    setEditingRecordId(record.id);
+    setDate(record.date.split('T')[0]);
+    setType(record.type);
+    setCategory(record.category);
+    setIsCustomCategory(true); // Biar gampang dan tidak bug kalau optionnya ga ada
+    setAmount(record.amount.toLocaleString('id-ID'));
+    setNotes(record.notes || '');
+    setPaymentMethod(record.paymentMethod || 'Cash');
+    setIsOperationalPool(record.isOperationalPool || false);
+    if (record.type === 'Transfer') {
+      setTransferDirection(record.transferDirection || 'ToCash');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleUpdateRecord = () => {
+    if (!editingRecordId) return;
+    if (type !== 'Transfer' && !category) return;
+    if (!amount) return;
+    
+    const parsedAmount = parseFloat(amount.toString().replace(/\D/g, ''));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
+
+    // First, undo the old record from Portofolio
+    const oldRecord = records.find(r => r.id === editingRecordId);
+    if (oldRecord && oldRecord.type !== 'Transfer' && !oldRecord.isOperationalPool) {
+      const existingAccounts = financialData.accounts || [];
+      let accountChanged = false;
+      const newAccounts = existingAccounts.map(acc => {
+        if (acc.name.toLowerCase() === oldRecord.category.toLowerCase()) {
+           accountChanged = true;
+           if (oldRecord.type === 'Income') return { ...acc, value: Math.max(0, acc.value - oldRecord.amount) };
+           else if (oldRecord.type === 'Expense') return { ...acc, value: acc.value + oldRecord.amount };
+        }
+        return acc;
+      });
+      if (accountChanged) {
+        financialData.setAccounts && financialData.setAccounts(newAccounts);
+        localStorage.setItem('accounts_data', JSON.stringify(newAccounts));
+      }
+    }
+
+    // Create updated record
+    const updatedRecord = {
+      id: editingRecordId,
+      date,
+      type,
+      category: type === 'Transfer' ? (transferDirection === 'ToCash' ? 'Tarik Tunai' : 'Setor Tunai') : category,
+      amount: parsedAmount,
+      notes,
+      isOperationalPool: type === 'Income' ? isOperationalPool : (type === 'Transfer' ? true : false),
+      paymentMethod: (type === 'Expense' || isOperationalPool) ? paymentMethod : null,
+      transferDirection: type === 'Transfer' ? transferDirection : null
+    };
+
+    const newRecords = records.map(r => r.id === editingRecordId ? updatedRecord : r);
+    setRecords(newRecords);
+    localStorage.setItem('cashflow_records', JSON.stringify(newRecords));
+    financialData.syncSheet && financialData.syncSheet('Cashflow', newRecords).catch(console.error);
+
+    // Apply new record to Portofolio
+    if (updatedRecord.type !== 'Transfer' && !updatedRecord.isOperationalPool) {
+      const currentAccounts = JSON.parse(localStorage.getItem('accounts_data')) || financialData.accounts || [];
+      let accountChanged = false;
+      const newAccounts = currentAccounts.map(acc => {
+        if (acc.name.toLowerCase() === updatedRecord.category.toLowerCase()) {
+           accountChanged = true;
+           if (updatedRecord.type === 'Income') return { ...acc, value: acc.value + updatedRecord.amount };
+           else if (updatedRecord.type === 'Expense') return { ...acc, value: Math.max(0, acc.value - updatedRecord.amount) };
+        }
+        return acc;
+      });
+      if (accountChanged) {
+        financialData.setAccounts && financialData.setAccounts(newAccounts);
+        localStorage.setItem('accounts_data', JSON.stringify(newAccounts));
+        financialData.syncSheet && financialData.syncSheet('Accounts', newAccounts).catch(console.error);
+      }
+    }
+
+    // Save custom category if new
+    if (type !== 'Transfer' && updatedRecord.category) {
+      const standardCategories = ['Gaji', 'Bonus', 'Hasil Investasi', 'Tagihan', 'Belanja Bulanan', 'Kesehatan'];
+      const accountNames = (financialData.accounts || []).map(a => a.name);
+      const walletNames = (financialData.operationalWallets || []).map(w => w.name);
+      
+      if (!standardCategories.includes(updatedRecord.category) && !accountNames.includes(updatedRecord.category) && !walletNames.includes(updatedRecord.category) && !customCategories.includes(updatedRecord.category)) {
+        const newCustomCats = [...customCategories, updatedRecord.category];
+        setCustomCategories(newCustomCats);
+        localStorage.setItem('custom_categories', JSON.stringify(newCustomCats));
+      }
+    }
+
+    // Reset
+    setEditingRecordId(null);
+    setCategory('');
+    setIsCustomCategory(false);
+    setAmount('');
+    setNotes('');
   };
 
   const handleDelete = (id) => {
@@ -153,7 +277,10 @@ export default function Cashflow({ financialData }) {
   const handleEnter = (e, nextRef) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (nextRef === 'submit') handleAddRecord();
+      if (nextRef === 'submit') {
+        if (editingRecordId) handleUpdateRecord();
+        else handleAddRecord();
+      }
       else nextRef?.current?.focus();
     }
   };
@@ -255,8 +382,8 @@ export default function Cashflow({ financialData }) {
           {/* Input Form Panel */}
           <section className="col-span-12 lg:col-span-4 glass-panel rounded-xl p-6 flex flex-col h-fit shadow-[0_0_20px_rgba(0,0,0,0.2)]">
             <h3 className="text-headline-sm font-headline-sm text-slate-200 mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">add_circle</span>
-              Catat Transaksi Baru
+              <span className="material-symbols-outlined text-primary">{editingRecordId ? 'edit_square' : 'add_circle'}</span>
+              {editingRecordId ? 'Revisi Transaksi' : 'Catat Transaksi Baru'}
             </h3>
             
             <div className="space-y-4 flex-1">
@@ -311,11 +438,12 @@ export default function Cashflow({ financialData }) {
                     {isCustomCategory ? (
                       <div className="flex w-full gap-2">
                         <input 
+                          id="cf-category"
                           ref={catRef}
                           type="text" 
                           value={category} 
                           onChange={(e) => setCategory(e.target.value)}
-                          onKeyDown={(e) => handleEnter(e, amountRef)}
+                          onKeyDown={(e) => e.key === 'Enter' && document.getElementById('cf-amount')?.focus()}
                           placeholder="Ketik nama kategori..."
                           className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                           autoFocus
@@ -331,6 +459,7 @@ export default function Cashflow({ financialData }) {
                     ) : (
                       <>
                         <select
+                          id="cf-category"
                           ref={catRef}
                           value={category}
                           onChange={(e) => {
@@ -341,7 +470,7 @@ export default function Cashflow({ financialData }) {
                               setCategory(e.target.value);
                             }
                           }}
-                          onKeyDown={(e) => handleEnter(e, amountRef)}
+                          onKeyDown={(e) => e.key === 'Enter' && document.getElementById('cf-amount')?.focus()}
                           className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 pr-10 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner appearance-none cursor-pointer [color-scheme:dark]" 
                         >
                           <option value="" disabled>Pilih Kategori...</option>
@@ -359,6 +488,14 @@ export default function Cashflow({ financialData }) {
                             <optgroup label="Portofolio (Tabungan & Investasi)">
                               {financialData.accounts.map(acc => (
                                 <option key={acc.id} value={acc.name}>{acc.name} - Rp{formatCurrency(acc.value)}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                          
+                          {customCategories.length > 0 && (
+                            <optgroup label="Kategori Tambahan Anda">
+                              {customCategories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
                               ))}
                             </optgroup>
                           )}
@@ -416,6 +553,7 @@ export default function Cashflow({ financialData }) {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-data-mono text-slate-300 text-sm">Rp</span>
                   <input 
+                    id="cf-amount"
                     ref={amountRef}
                     type="text" 
                     value={amount} 
@@ -427,7 +565,7 @@ export default function Cashflow({ financialData }) {
                         setAmount('');
                       }
                     }}
-                    onKeyDown={(e) => handleEnter(e, 'submit')}
+                    onKeyDown={(e) => e.key === 'Enter' && document.getElementById('cf-notes')?.focus()}
                     placeholder="0" 
                     className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
@@ -439,10 +577,11 @@ export default function Cashflow({ financialData }) {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">notes</span>
                   <input 
+                    id="cf-notes"
                     type="text" 
                     value={notes} 
                     onChange={(e) => setNotes(e.target.value)}
-                    onKeyDown={(e) => handleEnter(e, 'submit')}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('cf-submit')?.click(); } }}
                     placeholder="Tulis catatan tambahan..." 
                     className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-2.5 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
@@ -483,98 +622,110 @@ export default function Cashflow({ financialData }) {
             </div>
 
             <button 
-              onClick={handleAddRecord} 
+              id="cf-submit"
+              onClick={editingRecordId ? handleUpdateRecord : handleAddRecord} 
               disabled={(!category && type !== 'Transfer') || !amount}
-                  <span className="material-symbols-outlined text-sm">save</span>
-              Simpan Transaksi
+              className={`w-full mt-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 font-bold ${(!category && type !== 'Transfer' || !amount) ? 'bg-surface-container text-slate-500 cursor-not-allowed' : type === 'Income' ? 'bg-primary text-on-primary hover:bg-primary-fixed shadow-[0_0_15px_rgba(78,222,163,0.3)]' : type === 'Expense' ? 'bg-[#FDE047] text-slate-900 hover:bg-[#FEF08A] shadow-[0_0_15px_rgba(253,224,71,0.3)]' : 'bg-secondary text-white hover:bg-secondary-fixed shadow-[0_0_15px_rgba(167,139,250,0.3)]'}`}
+            >
+              <span className="material-symbols-outlined text-sm">{editingRecordId ? 'update' : 'save'}</span>
+              {editingRecordId ? 'Update Transaksi' : 'Simpan Transaksi'}
             </button>
+            {editingRecordId && (
+              <button 
+                onClick={() => {
+                  setEditingRecordId(null);
+                  setCategory('');
+                  setIsCustomCategory(false);
+                  setAmount('');
+                  setNotes('');
+                }}
+                className="w-full mt-3 py-3 rounded-xl border border-outline-variant text-slate-400 hover:text-slate-200 hover:bg-surface-variant/30 transition-all font-bold flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+                Batal Revisi
+              </button>
+            )}
           </section>
 
-          {/* Tables Panel (Grouped by Category) */}
-          <section className="col-span-12 lg:col-span-8 flex flex-col gap-6">
-            {filteredRecords.length === 0 ? (
-              <div className="glass-panel rounded-xl p-16 flex flex-col items-center justify-center opacity-80 shadow-[0_0_20px_rgba(0,0,0,0.2)]">
-                <span className="material-symbols-outlined text-6xl mb-4 text-slate-600">account_balance_wallet</span>
-                <p className="text-lg font-medium text-slate-300">Belum Ada Arus Kas</p>
-                <p className="text-sm mt-1 text-slate-500">Tidak ada catatan yang ditemukan untuk rentang tanggal ini.</p>
-              </div>
-            ) : (
-              (() => {
-                // Group by Category
-                const grouped = filteredRecords.reduce((acc, r) => {
-                  if (!acc[r.category]) {
-                    acc[r.category] = { name: r.category, type: r.type, total: 0, records: [] };
-                  }
-                  acc[r.category].total += r.amount;
-                  acc[r.category].records.push(r);
-                  return acc;
-                }, {});
-                
-                const categories = Object.values(grouped).sort((a, b) => {
-                  // Sort Income first, then by total amount descending
-                  if (a.type !== b.type) return a.type === 'Income' ? -1 : 1;
-                  return b.total - a.total;
-                });
-
-                return categories.map(cat => (
-                  <div key={cat.name} className="glass-panel rounded-xl p-0 flex flex-col overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.2)] border border-white/5">
-                    <div className="p-4 border-b border-white/5 bg-surface-container/20 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${cat.type === 'Income' ? 'bg-primary/10 text-primary' : 'bg-[#FDE047]/10 text-[#FDE047]'}`}>
-                          <span className="material-symbols-outlined text-[16px]">{cat.type === 'Income' ? 'arrow_downward' : 'arrow_upward'}</span>
+          {/* Table Panel */}
+          <section className="col-span-12 lg:col-span-8 glass-panel rounded-xl p-0 flex flex-col overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.2)]">
+            <div className="p-6 border-b border-white/5 bg-surface-container/20">
+              <h3 className="text-headline-sm font-headline-sm text-slate-200 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">receipt_long</span>
+                Riwayat Arus Kas
+              </h3>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-white/10 text-slate-500 text-xs font-data-mono uppercase tracking-wider bg-surface-container/20">
+                    <th className="p-4 font-medium">Tanggal</th>
+                    <th className="p-4 font-medium">Jenis</th>
+                    <th className="p-4 font-medium">Kategori</th>
+                    <th className="p-4 font-medium text-right">Nominal</th>
+                    <th className="p-4 font-medium text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/10 text-sm">
+                  {filteredRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="p-16 text-center text-slate-500">
+                        <div className="flex flex-col items-center justify-center opacity-80">
+                          <span className="material-symbols-outlined text-6xl mb-4 text-slate-600">account_balance_wallet</span>
+                          <p className="text-lg font-medium text-slate-300">Belum Ada Arus Kas</p>
+                          <p className="text-sm mt-1 text-slate-500">Tidak ada catatan yang ditemukan untuk rentang tanggal ini.</p>
                         </div>
-                        <h3 className="text-headline-sm font-headline-sm text-slate-200">{cat.name}</h3>
-                      </div>
-                      <div className={`font-data-mono font-bold text-lg ${cat.type === 'Income' ? 'text-primary' : 'text-[#FDE047]'}`}>
-                        {cat.type === 'Income' ? '+' : '-'}Rp {formatCurrency(cat.total)}
-                      </div>
-                    </div>
-                    
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[500px]">
-                        <thead>
-                          <tr className="border-b border-white/10 text-slate-500 text-[10px] font-data-mono uppercase tracking-widest bg-surface-container-lowest/30">
-                            <th className="p-3 pl-4 font-medium w-32">Tanggal</th>
-                            <th className="p-3 font-medium">Keterangan</th>
-                            <th className="p-3 font-medium text-right w-40">Nominal</th>
-                            <th className="p-3 font-medium text-center w-16">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-outline-variant/10 text-sm">
-                          {cat.records.sort((a,b) => new Date(b.date) - new Date(a.date)).map(record => (
-                            <tr key={record.id} className="hover:bg-surface-container/20 transition-colors group">
-                              <td className="p-3 pl-4 text-slate-300 font-data-mono text-xs whitespace-nowrap">
-                                {new Date(record.date).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'})}
-                              </td>
-                              <td className="p-3">
-                                <div className="flex items-center gap-2">
-                                  {record.paymentMethod && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30 text-slate-400 uppercase tracking-widest">{record.paymentMethod}</span>
-                                  )}
-                                  <span className="text-slate-300 text-sm">{record.notes || '-'}</span>
-                                </div>
-                              </td>
-                              <td className="p-3 text-right font-data-mono text-slate-200">
-                                Rp {formatCurrency(record.amount)}
-                              </td>
-                              <td className="p-3 text-center">
-                                <button 
-                                  onClick={() => handleDelete(record.id)}
-                                  className="text-slate-500 hover:text-error transition-colors p-1 opacity-0 group-hover:opacity-100"
-                                  title="Hapus"
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">delete</span>
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ));
-              })()
-            )}
+                      </td>
+                    </tr>
+                  ) : (
+                    [...filteredRecords].sort((a,b) => b.id - a.id).map(record => (
+                      <tr key={record.id} className="hover:bg-surface-container/20 transition-colors group">
+                        <td className="p-4 text-slate-200 whitespace-nowrap">{new Date(record.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})}</td>
+                        <td className="p-4">
+                          <div className={`text-[10px] px-2 py-0.5 rounded border uppercase tracking-widest inline-flex items-center gap-1 font-bold ${record.type === 'Income' ? 'border-primary/30 text-primary bg-primary/10' : record.type === 'Expense' ? 'border-[#FDE047]/30 text-[#FDE047] bg-[#FDE047]/10' : 'border-secondary/30 text-secondary bg-secondary/10'}`}>
+                            <span className="material-symbols-outlined text-[12px]">
+                              {record.type === 'Income' ? 'arrow_downward' : record.type === 'Expense' ? 'arrow_upward' : 'sync_alt'}
+                            </span>
+                            {record.type === 'Income' ? 'Pemasukan' : record.type === 'Expense' ? 'Pengeluaran' : 'Transfer'}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="font-medium text-slate-200">{record.category}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {record.paymentMethod && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30 text-slate-400 uppercase tracking-widest">{record.paymentMethod}</span>
+                            )}
+                            {record.notes && <span className="text-xs text-slate-400">{record.notes}</span>}
+                          </div>
+                        </td>
+                        <td className={`p-4 text-right font-data-mono font-bold ${record.type === 'Income' ? 'text-primary' : record.type === 'Expense' ? 'text-[#FDE047]' : 'text-secondary'}`}>
+                          {record.type === 'Income' ? '+' : record.type === 'Expense' ? '-' : ''}Rp {formatCurrency(record.amount)}
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => handleEditClick(record)}
+                              className="text-slate-500 hover:text-primary transition-colors p-1"
+                              title="Edit/Revisi"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(record.id)}
+                              className="text-slate-500 hover:text-error transition-colors p-1"
+                              title="Hapus"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </section>
         </div>
       </div>

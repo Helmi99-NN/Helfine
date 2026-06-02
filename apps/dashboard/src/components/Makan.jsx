@@ -353,10 +353,11 @@ export default function Makan({ financialData }) {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm pointer-events-none">calendar_today</span>
                   <input 
+                    id="mk-date"
                     type="date" 
                     value={foodDate} 
                     onChange={(e) => setFoodDate(e.target.value)} 
-                    onKeyDown={handleDateKeyDown}
+                    onKeyDown={(e) => e.key === 'Enter' && document.getElementById('mk-desc')?.focus()}
                     onClick={(e) => e.target.showPicker && e.target.showPicker()}
                     className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark] cursor-pointer" 
                   />
@@ -368,11 +369,12 @@ export default function Makan({ financialData }) {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">edit_note</span>
                   <input 
+                    id="mk-desc"
                     ref={ketRef}
                     type="text" 
                     value={foodDesc} 
                     onChange={(e) => setFoodDesc(e.target.value)} 
-                    onKeyDown={handleKetKeyDown}
+                    onKeyDown={(e) => e.key === 'Enter' && document.getElementById('mk-amount')?.focus()}
                     placeholder="Contoh: Nasi Padang..." 
                     className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-11 text-body-base text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
@@ -384,11 +386,12 @@ export default function Makan({ financialData }) {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-data-mono text-slate-300">Rp</span>
                   <input 
+                    id="mk-amount"
                     ref={nomRef}
                     type="text" 
                     value={foodNominal} 
                     onChange={handleNominalChange} 
-                    onKeyDown={handleNomKeyDown}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('mk-submit')?.click(); } }}
                     placeholder="0" 
                     className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 py-3 pl-12 text-data-mono font-data-mono text-lg text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                   />
@@ -397,6 +400,7 @@ export default function Makan({ financialData }) {
             </div>
 
             <button 
+              id="mk-submit"
               onClick={handleAddFood} 
               disabled={!foodNominal || !foodDesc}
               className={`w-full mt-6 py-4 rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${!foodNominal || !foodDesc ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-on-primary hover:bg-primary-fixed'}`}

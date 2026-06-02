@@ -452,10 +452,11 @@ export default function Trading({ financialData }) {
                 <div className="relative h-[46px]">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm pointer-events-none">calendar_today</span>
                   <input 
+                    id="tr-date"
                     type="date" 
                     value={date} 
                     onChange={(e) => setDate(e.target.value)}
-                    onKeyDown={(e) => handleEnter(e, codeRef)}
+                    onKeyDown={(e) => e.key === 'Enter' && document.getElementById('tr-code')?.focus()}
                     onClick={(e) => e.target.showPicker && e.target.showPicker()}
                     className="w-full h-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner [color-scheme:dark] cursor-pointer" 
                   />
@@ -467,11 +468,12 @@ export default function Trading({ financialData }) {
                 <div className="relative h-[46px]">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 text-sm">tag</span>
                   <input 
+                    id="tr-code"
                     ref={codeRef}
                     type="text" 
                     value={code} 
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => handleEnter(e, lotRef)}
+                    onKeyDown={(e) => e.key === 'Enter' && document.getElementById('tr-lot')?.focus()}
                     placeholder="Contoh: BUMI" 
                     className="w-full h-full bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 pl-11 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner uppercase" 
                   />
@@ -481,11 +483,12 @@ export default function Trading({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Lot</label>
                 <input 
+                  id="tr-lot"
                   ref={lotRef}
                   type="number" 
                   value={lot} 
                   onChange={(e) => setLot(e.target.value)}
-                  onKeyDown={(e) => handleEnter(e, buyRef)}
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('tr-buy')?.focus()}
                   placeholder="0" 
                   className="w-full h-[46px] bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                 />
@@ -494,11 +497,12 @@ export default function Trading({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Harga Beli</label>
                 <input 
+                  id="tr-buy"
                   ref={buyRef}
                   type="number" 
                   value={buy} 
                   onChange={(e) => setBuy(e.target.value)}
-                  onKeyDown={(e) => handleEnter(e, sellRef)}
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('tr-sell')?.focus()}
                   placeholder="0" 
                   className="w-full h-[46px] bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                 />
@@ -507,11 +511,12 @@ export default function Trading({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Harga Jual</label>
                 <input 
+                  id="tr-sell"
                   ref={sellRef}
                   type="number" 
                   value={sell} 
                   onChange={(e) => setSell(e.target.value)}
-                  onKeyDown={(e) => handleEnter(e, 'submit')}
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('tr-target')?.focus()}
                   placeholder="0" 
                   className="w-full h-[46px] bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                 />
@@ -520,11 +525,12 @@ export default function Trading({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Target (Opsional)</label>
                 <input 
+                  id="tr-target"
                   ref={targetRef}
                   type="number" 
                   value={target} 
                   onChange={(e) => setTarget(e.target.value)}
-                  onKeyDown={(e) => handleEnter(e, stopLossRef)}
+                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('tr-stop')?.focus()}
                   placeholder="0" 
                   className="w-full h-[46px] bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                 />
@@ -533,11 +539,12 @@ export default function Trading({ financialData }) {
               <div>
                 <label className="block text-label-sm font-label-sm text-slate-500 mb-2">Stop Loss (Opsional)</label>
                 <input 
+                  id="tr-stop"
                   ref={stopLossRef}
                   type="number" 
                   value={stopLoss} 
                   onChange={(e) => setStopLoss(e.target.value)}
-                  onKeyDown={(e) => handleEnter(e, sellRef)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('tr-submit')?.click(); } }}
                   placeholder="0" 
                   className="w-full h-[46px] bg-surface-container-lowest/50 border border-outline-variant rounded-xl px-4 text-sm text-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner" 
                 />
@@ -614,6 +621,7 @@ export default function Trading({ financialData }) {
 
               <div className="w-full lg:w-[280px]">
                 <button 
+                  id="tr-submit"
                   onClick={handleAddTrade} 
                   disabled={!code || !lot || !buy}
                   className={`w-full h-[60px] rounded-xl transition-all flex items-center justify-center gap-2 font-bold shadow-[0_0_15px_rgba(78,222,163,0.3)] ${(!code || !lot || !buy) ? 'bg-surface-container text-slate-500 cursor-not-allowed shadow-none' : 'bg-primary text-on-primary hover:bg-primary-fixed'}`}

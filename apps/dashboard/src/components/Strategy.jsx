@@ -21,6 +21,41 @@ export default function Strategy({ financialData }) {
     return [];
   });
 
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferFrom, setTransferFrom] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+
+  const handleTransferWallets = () => {
+    if (!transferFrom || !transferTo || !transferAmount) return;
+    const amount = parseInt(transferAmount.replace(/\D/g, '')) || 0;
+    if (amount <= 0) return;
+
+    const fromWallet = financialData.operationalWallets.find(w => w.id === transferFrom);
+    const toWallet = financialData.operationalWallets.find(w => w.id === transferTo);
+    
+    if (!fromWallet || !toWallet) return;
+    
+    if (amount > fromWallet.currentBalance) {
+      alert("Saldo kantong asal tidak cukup untuk dipindahkan!");
+      return;
+    }
+
+    const newWallets = operationalWallets.map(w => {
+      if (w.id === transferFrom) return { ...w, balance: w.balance - amount };
+      if (w.id === transferTo) return { ...w, balance: (w.balance || 0) + amount };
+      return w;
+    });
+
+    setOperationalWallets && setOperationalWallets(newWallets);
+    financialData.syncSheet && financialData.syncSheet('OperationalWallets', newWallets).catch(console.error);
+
+    setIsTransferModalOpen(false);
+    setTransferFrom('');
+    setTransferTo('');
+    setTransferAmount('');
+  };
+
   const handleTransferToSavings = () => {
     if (financialData.operationalPoolBalance <= 0) {
       alert("Tidak ada sisa saldo di Pool Operasional untuk ditransfer.");
@@ -88,10 +123,16 @@ export default function Strategy({ financialData }) {
           {/* Section 1: Wallet Status Grid (Col span 12) */}
           <section className="col-span-12 glass-panel rounded-xl p-container-padding flex flex-col h-full hover:shadow-[0_0_20px_rgba(78,222,163,0.05)] transition-shadow duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-stack-md gap-4">
-              <h3 className="text-headline-md font-headline-md text-slate-200 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">account_tree</span>
-                Alokasi Operasional
-              </h3>
+              <div className="flex items-center gap-4">
+                <h3 className="text-headline-md font-headline-md text-slate-200 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">account_tree</span>
+                  Alokasi Operasional
+                </h3>
+                <button onClick={() => setIsTransferModalOpen(!isTransferModalOpen)} className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center gap-2 border ${isTransferModalOpen ? 'bg-secondary/20 text-secondary border-secondary/50' : 'bg-surface-container hover:bg-surface-container-high border-outline-variant/50 text-slate-200'}`}>
+                  <span className="material-symbols-outlined text-[16px]">sync_alt</span>
+                  Pindah Saldo
+                </button>
+              </div>
               <div className="flex flex-col items-end gap-2">
                 <div className="bg-slate-800/50 px-4 py-2 rounded-lg border border-white/10 text-right">
                   <p className="font-label-sm text-label-sm text-slate-300">Total Operasional Terkini</p>
@@ -99,6 +140,46 @@ export default function Strategy({ financialData }) {
                 </div>
               </div>
             </div>
+
+            {/* Transfer Form Panel */}
+            {isTransferModalOpen && (
+              <div className="mb-6 p-4 rounded-xl border border-secondary/30 bg-secondary/5 animate-in slide-in-from-top-4 duration-300">
+                <h4 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-[18px]">sync_alt</span>
+                  Pindah Saldo Antar Kantong
+                </h4>
+                <div className="flex flex-col md:flex-row items-end gap-4">
+                  <div className="flex-1 w-full">
+                    <label className="block text-xs text-slate-400 mb-1">Dari Kantong (Sumber)</label>
+                    <select value={transferFrom} onChange={e => setTransferFrom(e.target.value)} className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-secondary [color-scheme:dark]">
+                      <option value="" disabled>Pilih Kantong Sumber...</option>
+                      {financialData.operationalWallets.filter(w => w.currentBalance > 0).map(w => (
+                        <option key={w.id} value={w.id}>{w.name} (Sisa: Rp{financialData.formatCurrency(w.currentBalance)})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1 w-full">
+                    <label className="block text-xs text-slate-400 mb-1">Ke Kantong (Tujuan)</label>
+                    <select value={transferTo} onChange={e => setTransferTo(e.target.value)} className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-secondary [color-scheme:dark]">
+                      <option value="" disabled>Pilih Kantong Tujuan...</option>
+                      {financialData.operationalWallets.filter(w => w.id !== transferFrom).map(w => (
+                        <option key={w.id} value={w.id}>{w.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1 w-full">
+                    <label className="block text-xs text-slate-400 mb-1">Nominal (Rp)</label>
+                    <input type="text" value={transferAmount} onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, '');
+                      setTransferAmount(raw ? parseInt(raw, 10).toLocaleString('id-ID') : '');
+                    }} placeholder="0" className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-secondary font-data-mono" />
+                  </div>
+                  <button onClick={handleTransferWallets} disabled={!transferFrom || !transferTo || !transferAmount} className="w-full md:w-auto bg-secondary hover:bg-secondary-fixed text-white font-bold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-[38px] flex items-center justify-center">
+                    Transfer
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Pool Status Widget */}
             <div className="mb-stack-md bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">

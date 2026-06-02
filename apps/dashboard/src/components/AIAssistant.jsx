@@ -16,8 +16,51 @@ export default function AIAssistant({ financialData }) {
   const [selectedImage, setSelectedImage] = useState(null);
   
   const fileInputRef = useRef(null);
-  
   const messagesEndRef = useRef(null);
+
+  // Drag functionality state
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return; // Only left click
+    // Jangan drag jika yang diklik adalah tombol (settings/close)
+    if (e.target.closest('button')) return;
+    
+    setIsDragging(true);
+    dragStartPos.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStartPos.current.x,
+      y: e.clientY - dragStartPos.current.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -277,10 +320,19 @@ Asisten:`;
 
   // Render chat window
   return (
-    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] w-[calc(100vw-32px)] sm:w-[360px] md:w-[400px] h-[600px] max-h-[85dvh] flex flex-col bg-white/95 dark:bg-surface-container/95 backdrop-blur-3xl border border-slate-200 dark:border-outline-variant/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden font-['Plus_Jakarta_Sans']">
+    <div 
+      className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] w-[calc(100vw-32px)] sm:w-[360px] md:w-[400px] h-[600px] max-h-[85dvh] flex flex-col bg-white/95 dark:bg-surface-container/95 backdrop-blur-3xl border border-slate-200 dark:border-outline-variant/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden font-['Plus_Jakarta_Sans'] transition-shadow"
+      style={{ 
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        boxShadow: isDragging ? '0 20px 50px rgba(0,0,0,0.3)' : undefined
+      }}
+    >
       
       {/* Header */}
-      <div className="p-4 bg-slate-100/80 dark:bg-surface-container-high/50 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+      <div 
+        onMouseDown={handleMouseDown}
+        className={`p-4 bg-slate-100/80 dark:bg-surface-container-high/50 border-b border-slate-200 dark:border-white/5 flex items-center justify-between ${isDragging ? 'cursor-grabbing' : 'cursor-grab active:cursor-grabbing'}`}
+      >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-[#8A5CF6] flex items-center justify-center text-white shadow-inner">
             <span className="material-symbols-outlined text-[18px]">smart_toy</span>
@@ -298,7 +350,10 @@ Asisten:`;
             <span className="material-symbols-outlined text-[18px]">settings</span>
           </button>
           <button 
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              setIsOpen(false);
+              setPosition({ x: 0, y: 0 });
+            }}
             className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-error/20 hover:text-error transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">close</span>

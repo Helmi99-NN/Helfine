@@ -43,6 +43,7 @@ import Trading from './components/Trading';
 import Cashflow from './components/Cashflow';
 import Resume from './components/Resume';
 import Ledger from './components/Ledger';
+import ProfitLoss from './components/ProfitLoss';
 import Login from './components/Login';
 import AIAssistant from './components/AIAssistant';
 
@@ -284,7 +285,7 @@ function App() {
   return (
     <>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} financialData={financialData} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} isLightMode={isLightMode} setIsLightMode={setIsLightMode} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} />
-      <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : activeTab === 'ledger' ? 'Buku Besar' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
+      <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : activeTab === 'ledger' ? 'Buku Besar' : activeTab === 'profitloss' ? 'Laba Rugi' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
       <div key={activeTab} className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
         {activeTab === 'portfolio' && <Dashboard setActiveTab={setActiveTab} financialData={financialData} />}
         {activeTab === 'analytics' && <Analytics financialData={financialData} />}
@@ -295,6 +296,7 @@ function App() {
         {activeTab === 'trading' && <Trading financialData={financialData} />}
         {activeTab === 'cashflow' && <Cashflow financialData={financialData} />}
         {activeTab === 'ledger' && <Ledger financialData={financialData} />}
+        {activeTab === 'profitloss' && <ProfitLoss financialData={financialData} />}
         {activeTab === 'resume' && <Resume financialData={financialData} />}
       </div>
       <AIAssistant financialData={financialData} />

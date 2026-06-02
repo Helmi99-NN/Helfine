@@ -48,101 +48,189 @@ const expenses = [
 ];
 const totalExpense = [0, 15600566, 0, 5826000];
 
+const indonesianMonths = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+function getNextMonthLabel(lastLabel) {
+  if (!lastLabel) return "20 (Unknown)";
+  const parts = lastLabel.split(' ');
+  const dateNum = parts[0];
+  const monthName = parts[1];
+  let monthIndex = indonesianMonths.indexOf(monthName);
+  if (monthIndex === -1) return `${lastLabel} (Next)`;
+  let nextMonthIndex = (monthIndex + 1) % 12;
+  return `${dateNum} ${indonesianMonths[nextMonthIndex]}`;
+}
+
+function getCycleDates(monthLabel) {
+  const parts = monthLabel.replace(' (Berjalan)', '').split(' ');
+  const day = parseInt(parts[0], 10) || 20;
+  const monthName = parts[1];
+  const monthIndex = indonesianMonths.indexOf(monthName);
+  
+  if (monthIndex === -1) return null;
+  
+  const currentYear = new Date().getFullYear();
+  let prevMonthIndex = monthIndex - 1;
+  let prevYear = currentYear;
+  if (prevMonthIndex < 0) {
+    prevMonthIndex = 11;
+    prevYear--;
+  }
+  
+  // Tanggal mulai: 21 bulan lalu 00:00:00
+  const startDate = new Date(prevYear, prevMonthIndex, day + 1);
+  startDate.setHours(0,0,0,0);
+  
+  // Tanggal akhir: 20 bulan ini 23:59:59
+  const endDate = new Date(currentYear, monthIndex, day);
+  endDate.setHours(23,59,59,999);
+  
+  return { startDate, endDate };
+}
+
 export default function Resume({ financialData }) {
   const { formatCurrency } = financialData;
-  const [dynamicHistory, setDynamicHistory] = useState([]);
+  const [savedHistory, setSavedHistory] = useState([]);
 
   React.useEffect(() => {
     try {
       const stored = localStorage.getItem('resume_dynamic_history');
-      if (stored) setDynamicHistory(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const uniqueHistoryMap = new Map();
+        parsed.forEach(item => {
+           let monthLabel = item.month;
+           if (monthLabel && monthLabel.includes('T')) {
+             const dateObj = new Date(monthLabel);
+             monthLabel = `20 ${dateObj.toLocaleDateString('id-ID', { month: 'long' })}`;
+           }
+           uniqueHistoryMap.set(monthLabel, { ...item, month: monthLabel });
+        });
+        
+        // --- AUTO-FIX UNTUK 20 MEI (Membuang pengeluaran yang lewat tanggal 20) ---
+        const meiSnapshot = uniqueHistoryMap.get("20 Mei");
+        if (meiSnapshot) {
+           const { startDate, endDate } = getCycleDates("20 Mei");
+           
+           const cf = JSON.parse(localStorage.getItem('cashflow_records') || '[]');
+           const meiRecords = cf.filter(r => {
+             const d = new Date(r.date);
+             return d >= startDate && d <= endDate;
+           });
+           const incMap = {};
+           const expMap = {};
+           meiRecords.forEach(r => {
+             if (r.type === 'Income') incMap[r.category] = (incMap[r.category] || 0) + r.amount;
+             else if (r.type === 'Expense') expMap[r.category] = (expMap[r.category] || 0) + r.amount;
+           });
+           meiSnapshot.incomes = Object.keys(incMap).map(k => ({ name: k, value: incMap[k] }));
+           meiSnapshot.expenses = Object.keys(expMap).map(k => ({ name: k, value: expMap[k] }));
+           
+           const stratTxs = JSON.parse(localStorage.getItem('strategy_transactions') || '[]');
+           const stratMei = stratTxs.filter(r => {
+             const d = new Date(r.date); return d >= startDate && d <= endDate;
+           });
+           const stratSpent = stratMei.reduce((s, r) => s + r.amount, 0);
+           if (stratSpent > 0) meiSnapshot.expenses.push({ name: 'Operasional', value: stratSpent });
+           
+           const makanTxs = JSON.parse(localStorage.getItem('makan_transactions') || '[]');
+           const makanMei = makanTxs.filter(r => {
+             const d = new Date(r.date); return d >= startDate && d <= endDate;
+           });
+           const makanSpent = makanMei.reduce((s, r) => s + r.amount, 0);
+           if (makanSpent > 0) meiSnapshot.expenses.push({ name: 'Makan', value: makanSpent });
+
+           uniqueHistoryMap.set("20 Mei", meiSnapshot);
+           localStorage.setItem('resume_dynamic_history', JSON.stringify(Array.from(uniqueHistoryMap.values())));
+        }
+
+        setSavedHistory(Array.from(uniqueHistoryMap.values()));
+      }
     } catch (e) {}
   }, []);
 
-  const handlePosting = () => {
-    const { accounts, syncSheet } = financialData;
-    const today = new Date();
-    const monthYear = today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }); // e.g., "Mei 2026"
-    const monthLabel = `20 ${monthYear.split(' ')[0]}`; // e.g., "20 Mei"
-    
-    let savedHistory = [];
-    try {
-      const stored = localStorage.getItem('resume_dynamic_history');
-      if (stored) savedHistory = JSON.parse(stored);
-    } catch (e) {}
-    
-    // Cek apakah bulan ini sudah diposting
-    if (savedHistory.some(s => {
-      if (s.month === monthLabel) return true;
-      if (s.month && s.month.includes('T')) {
-        const dateObj = new Date(s.month);
-        const sMonth = dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        return monthYear === sMonth;
-      }
-      return false;
-    })) {
-      alert(`Data untuk bulan ${monthLabel} sudah diposting sebelumnya.`);
-      return;
+  const getNextMonthToClose = () => {
+    let lastClosedLabel = months[months.length - 1]; // "20 April"
+    if (savedHistory.length > 0) {
+      lastClosedLabel = savedHistory[savedHistory.length - 1].month;
     }
+    return getNextMonthLabel(lastClosedLabel);
+  };
+
+  const getCurrentSnapshot = () => {
+    const today = new Date();
+    const currentMonthLabel = getNextMonthToClose() + " (Berjalan)";
+    const { startDate, endDate } = getCycleDates(currentMonthLabel) || { startDate: new Date(0), endDate: new Date() };
 
     // 1. Snapshot Accounts
-    const balances = accounts.map(acc => ({ name: acc.name, value: acc.value }));
+    const balances = financialData.accounts ? financialData.accounts.map(acc => ({ name: acc.name, value: acc.value })) : [];
     
     // 2. Snapshot Cashflow
-    let incomes = [];
-    let extraExpenses = [];
+    let currentIncomes = [];
+    let currentExpenses = [];
     try {
       const cf = JSON.parse(localStorage.getItem('cashflow_records') || '[]');
-      const currentMonth = today.getMonth();
-      const currentYear = today.getFullYear();
       const currentMonthRecords = cf.filter(r => {
         const d = new Date(r.date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        return d >= startDate && d <= endDate;
       });
       const incMap = {};
       const expMap = {};
       currentMonthRecords.forEach(r => {
         if (r.type === 'Income') incMap[r.category] = (incMap[r.category] || 0) + r.amount;
-        else expMap[r.category] = (expMap[r.category] || 0) + r.amount;
+        else if (r.type === 'Expense') expMap[r.category] = (expMap[r.category] || 0) + r.amount;
       });
-      incomes = Object.keys(incMap).map(k => ({ name: k, value: incMap[k] }));
-      extraExpenses = Object.keys(expMap).map(k => ({ name: k, value: expMap[k] }));
+      currentIncomes = Object.keys(incMap).map(k => ({ name: k, value: incMap[k] }));
+      currentExpenses = Object.keys(expMap).map(k => ({ name: k, value: expMap[k] }));
     } catch (e) {}
 
-    // 3. Snapshot Operational & Makan
+    // 3. Operational Spent
     try {
       const txs = JSON.parse(localStorage.getItem('strategy_transactions') || '[]');
-      const currentMonth = today.getMonth();
-      const currentYear = today.getFullYear();
-      const currentTxs = txs.filter(r => new Date(r.date).getMonth() === currentMonth && new Date(r.date).getFullYear() === currentYear);
+      const currentTxs = txs.filter(r => {
+        const d = new Date(r.date);
+        return d >= startDate && d <= endDate;
+      });
       const operationalSpent = currentTxs.reduce((sum, r) => sum + r.amount, 0);
-      if (operationalSpent > 0) extraExpenses.push({ name: 'Operasional', value: operationalSpent });
+      if (operationalSpent > 0) currentExpenses.push({ name: 'Operasional', value: operationalSpent });
     } catch (e) {}
 
     try {
       const txs = JSON.parse(localStorage.getItem('makan_transactions') || '[]');
-      const currentMonth = today.getMonth();
-      const currentYear = today.getFullYear();
-      const currentTxs = txs.filter(r => new Date(r.date).getMonth() === currentMonth && new Date(r.date).getFullYear() === currentYear);
+      const currentTxs = txs.filter(r => {
+        const d = new Date(r.date);
+        return d >= startDate && d <= endDate;
+      });
       const makanSpent = currentTxs.reduce((sum, r) => sum + r.amount, 0);
-      if (makanSpent > 0) extraExpenses.push({ name: 'Makan', value: makanSpent });
+      if (makanSpent > 0) currentExpenses.push({ name: 'Makan', value: makanSpent });
     } catch (e) {}
 
-    // Create snapshot
-    const newSnapshot = {
-      id: Date.now(),
-      month: monthLabel,
+    return {
+      id: 'current',
+      month: currentMonthLabel,
       balances,
-      incomes,
-      expenses: extraExpenses,
+      incomes: currentIncomes,
+      expenses: currentExpenses,
       timestamp: today.toISOString()
     };
-    
-    const newHistory = [...savedHistory, newSnapshot];
+  };
+
+  const dynamicHistory = [...savedHistory, getCurrentSnapshot()];
+
+  const handleCloseBook = () => {
+    const nextMonthToClose = getNextMonthToClose();
+    const confirmClose = window.confirm(`Apakah Anda yakin ingin menutup buku untuk periode ${nextMonthToClose}? Data saat ini akan dikunci secara permanen dan saldo akan diteruskan ke bulan berikutnya.`);
+    if (!confirmClose) return;
+
+    const snapshotToSave = getCurrentSnapshot();
+    snapshotToSave.month = nextMonthToClose; // Hapus label "(Berjalan)"
+    snapshotToSave.id = Date.now();
+
+    const newHistory = [...savedHistory, snapshotToSave];
     localStorage.setItem('resume_dynamic_history', JSON.stringify(newHistory));
-    setDynamicHistory(newHistory);
-    if (syncSheet) syncSheet('Resume', newHistory).catch(console.error); // Sync to DB
-    alert(`Berhasil memposting data untuk bulan ${monthLabel}!`);
+    setSavedHistory(newHistory);
+    if (financialData.syncSheet) financialData.syncSheet('Resume', newHistory).catch(console.error);
+    alert(`Berhasil menutup buku untuk ${nextMonthToClose}!`);
   };
 
   // Merge static and dynamic data
@@ -284,11 +372,11 @@ export default function Resume({ financialData }) {
             </p>
           </div>
           <button 
-            onClick={handlePosting}
+            onClick={handleCloseBook}
             className="flex items-center gap-2 bg-primary hover:bg-primary-fixed text-on-primary px-6 py-3 rounded-xl shadow-lg transition-all active:scale-95 whitespace-nowrap group"
           >
-            <span className="material-symbols-outlined group-hover:-translate-y-1 transition-transform">publish</span>
-            Posting Data Bulan Ini
+            <span className="material-symbols-outlined group-hover:-translate-y-1 transition-transform">lock</span>
+            Tutup Buku Bulan Ini
           </button>
         </div>
 
