@@ -8,9 +8,22 @@ export default function AIAssistant({ financialData }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(!localStorage.getItem('gemini_api_key'));
   const [inputKey, setInputKey] = useState(apiKey);
   
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Halo! Saya Asisten Gemini AI. Saya memiliki akses ke ringkasan data keuangan Anda (saldo, pengeluaran makan, arus kas, jurnal trading). Ada yang bisa saya bantu hari ini?' }
-  ]);
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ai_chat_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch(e) {}
+    return [
+      { role: 'assistant', text: 'Halo! Saya Asisten Gemini AI. Saya memiliki akses ke ringkasan data keuangan Anda (saldo, pengeluaran makan, arus kas, jurnal trading). Ada yang bisa saya bantu hari ini?' }
+    ];
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('ai_chat_history', JSON.stringify(messages));
+  }, [messages]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -209,7 +222,7 @@ export default function AIAssistant({ financialData }) {
         }
       ];
 
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools }); 
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", tools }); 
       
       const context = buildContext();
       
@@ -343,6 +356,17 @@ Asisten:`;
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <button 
+            onClick={() => {
+              if (window.confirm("Apakah Anda yakin ingin menghapus semua riwayat chat ini?")) {
+                setMessages([{ role: 'assistant', text: 'Halo! Saya Asisten Gemini AI. Saya memiliki akses ke ringkasan data keuangan Anda (saldo, pengeluaran makan, arus kas, jurnal trading). Ada yang bisa saya bantu hari ini?' }]);
+              }
+            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-error dark:hover:text-error transition-colors"
+            title="Hapus Riwayat Chat"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
+          </button>
           <button 
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isSettingsOpen ? 'bg-primary/20 text-primary' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-200'}`}

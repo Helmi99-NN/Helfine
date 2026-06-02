@@ -32,8 +32,16 @@ export default function Cashflow({ financialData }) {
 
   // Filtering State
   const [filterStartDate, setFilterStartDate] = useState(() => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+    const today = new Date();
+    const isPast20 = today.getDate() > 20;
+    const start = isPast20 
+      ? new Date(today.getFullYear(), today.getMonth(), 20) 
+      : new Date(today.getFullYear(), today.getMonth() - 1, 20);
+    
+    const sy = start.getFullYear();
+    const sm = String(start.getMonth() + 1).padStart(2, '0');
+    const sd = String(start.getDate()).padStart(2, '0');
+    return `${sy}-${sm}-${sd}`;
   });
   const [filterEndDate, setFilterEndDate] = useState('');
 
