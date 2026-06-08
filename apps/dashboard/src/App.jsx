@@ -126,8 +126,14 @@ function App() {
     const loadDB = async () => {
       try {
         const data = await fetchDatabase();
-        if (data.Accounts && data.Accounts.length > 0) setAccounts(data.Accounts);
-        if (data.OperationalWallets && data.OperationalWallets.length > 0) setOperationalWallets(data.OperationalWallets);
+        if (data.Accounts && data.Accounts.length > 0) {
+          setAccounts(data.Accounts);
+          localStorage.setItem('accounts_data', JSON.stringify(data.Accounts));
+        }
+        if (data.OperationalWallets && data.OperationalWallets.length > 0) {
+          setOperationalWallets(data.OperationalWallets);
+          localStorage.setItem('operational_data', JSON.stringify(data.OperationalWallets));
+        }
         
         // Sync to localStorage cache for components
         if (data.Cashflow) localStorage.setItem('cashflow_records', JSON.stringify(data.Cashflow));
@@ -253,7 +259,7 @@ function App() {
     return (
       <>
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} financialData={financialData} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} isLightMode={isLightMode} setIsLightMode={setIsLightMode} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} />
-        <Header title="Memuat Data..." isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
+        <Header financialData={financialData} title="Memuat Data..." isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
         <main className="pt-24 pb-12 px-gutter md:px-margin-page md:ml-64 w-full md:w-[calc(100%-16rem)]">
           <div className="grid grid-cols-12 gap-6 md:gap-stack-lg max-w-7xl mx-auto">
             {/* Hero Skeleton */}
@@ -285,7 +291,7 @@ function App() {
   return (
     <>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} financialData={financialData} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} isLightMode={isLightMode} setIsLightMode={setIsLightMode} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} />
-      <Header title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : activeTab === 'ledger' ? 'Buku Besar' : activeTab === 'profitloss' ? 'Laba Rugi' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
+      <Header financialData={financialData} title={activeTab === 'analytics' ? 'Monthly Recap' : activeTab === 'investments' ? 'Investment' : activeTab === 'savings' ? 'Tabungan & Cadangan' : activeTab === 'strategy' ? 'Operational Menu' : activeTab === 'makan' ? 'Pencatatan Makan' : activeTab === 'trading' ? 'Jurnal Trading' : activeTab === 'cashflow' ? 'Arus Kas' : activeTab === 'resume' ? 'Resume Historis' : activeTab === 'ledger' ? 'Buku Besar' : activeTab === 'profitloss' ? 'Laba Rugi' : 'Dashboard'} isPrivacyMode={isPrivacyMode} setIsPrivacyMode={setIsPrivacyMode} isLightMode={isLightMode} setIsLightMode={setIsLightMode} onMenuClick={() => setIsMobileMenuOpen(true)} onLogout={() => { sessionStorage.removeItem('helfine_auth'); setIsAuthenticated(false); }} onLogoClick={() => setActiveTab('portfolio')} />
       <div key={activeTab} className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
         {activeTab === 'portfolio' && <Dashboard setActiveTab={setActiveTab} financialData={financialData} />}
         {activeTab === 'analytics' && <Analytics financialData={financialData} />}

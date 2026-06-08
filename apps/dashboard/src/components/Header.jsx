@@ -1,8 +1,47 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivacyMode, isLightMode, setIsLightMode, onMenuClick, onLogout, onLogoClick }) {
+export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivacyMode, isLightMode, setIsLightMode, onMenuClick, onLogout, onLogoClick, financialData }) {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const headerRef = useRef(null);
+
+  const handleForceSync = async () => {
+    if (!financialData || !financialData.syncSheet) {
+      alert("Fungsi sinkronisasi belum siap. Tunggu sebentar.");
+      return;
+    }
+    
+    if (!window.confirm("Sinkronkan semua data lokal ke Cloud (Google Sheets)? Tindakan ini akan menimpa data di Cloud dengan versi localhost Anda saat ini.")) return;
+
+    try {
+      const btn = document.getElementById('sync-btn-icon');
+      if (btn) btn.classList.add('animate-spin');
+      
+      const pAccounts = financialData.accounts ? financialData.syncSheet('Accounts', financialData.accounts) : Promise.resolve();
+      const pWallets = financialData.operationalWallets ? financialData.syncSheet('OperationalWallets', financialData.operationalWallets) : Promise.resolve();
+      
+      const cashflow = JSON.parse(localStorage.getItem('cashflow_records') || '[]');
+      const strategy = JSON.parse(localStorage.getItem('strategy_transactions') || '[]');
+      const makan = JSON.parse(localStorage.getItem('makan_transactions') || '[]');
+      const trading = JSON.parse(localStorage.getItem('trading_journal') || '[]');
+      const resume = JSON.parse(localStorage.getItem('resume_dynamic_history') || '[]');
+      
+      await Promise.all([
+        pAccounts, pWallets,
+        cashflow.length > 0 ? financialData.syncSheet('Cashflow', cashflow) : Promise.resolve(),
+        strategy.length > 0 ? financialData.syncSheet('Strategy', strategy) : Promise.resolve(),
+        makan.length > 0 ? financialData.syncSheet('Makan', makan) : Promise.resolve(),
+        trading.length > 0 ? financialData.syncSheet('Trading', trading) : Promise.resolve(),
+        resume.length > 0 ? financialData.syncSheet('Resume', resume) : Promise.resolve()
+      ]);
+      
+      if (btn) btn.classList.remove('animate-spin');
+      alert('Sinkronisasi ke Cloud Berhasil! Data di Vercel sekarang sudah sama dengan Localhost. Silakan buka versi Vercel Anda dan refresh halamannya.');
+    } catch (e) {
+      alert('Gagal sinkronisasi: ' + e.message);
+      const btn = document.getElementById('sync-btn-icon');
+      if (btn) btn.classList.remove('animate-spin');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -77,6 +116,17 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
             </div>
           )}
         </div>
+
+        {/* Sync Toggle */}
+        <button 
+          onClick={handleForceSync}
+          className="p-2 text-primary bg-primary/10 hover:bg-primary/20 transition-all duration-200 rounded-full scale-95 active:scale-90 flex items-center justify-center mr-2" 
+          title="Force Sync ke Cloud (Timpa data Vercel dengan versi Lokal)"
+        >
+          <span id="sync-btn-icon" className="material-symbols-outlined text-[20px]">
+            cloud_sync
+          </span>
+        </button>
 
         {/* Privacy Toggle */}
         <button 
