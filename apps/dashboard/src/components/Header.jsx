@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 
 export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivacyMode, isLightMode, setIsLightMode, onMenuClick, onLogout, onLogoClick, financialData }) {
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const headerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const handleForceSync = async () => {
     if (!financialData || !financialData.syncSheet) {
@@ -43,6 +45,61 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
     }
   };
 
+  const handleExportBackup = () => {
+    try {
+      const keys = ['accounts_data', 'operational_wallets', 'cashflow_records', 'strategy_transactions', 'makan_transactions', 'trading_journal', 'resume_dynamic_history'];
+      const data = {};
+      keys.forEach(k => {
+        const item = localStorage.getItem(k);
+        if (item) data[k] = item;
+      });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `helfine_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Gagal melakukan export: " + e.message);
+    }
+  };
+
+  const handleImportBackup = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (!window.confirm("Peringatan: Mengimpor data akan menimpa SEMUA data lokal Anda saat ini. Apakah Anda yakin ingin melanjutkan?")) return;
+        
+        Object.keys(data).forEach(k => {
+          localStorage.setItem(k, data[k]);
+        });
+        alert("Import berhasil! Halaman akan dimuat ulang.");
+        window.location.reload();
+      } catch (err) {
+        alert("File backup tidak valid: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleRestoreSnapshot = (snapshot) => {
+    if (!window.confirm(`Peringatan: Mengembalikan data dari tanggal ${new Date(snapshot.date).toLocaleString('id-ID')} akan menimpa data Anda saat ini. Lanjutkan?`)) return;
+    try {
+      Object.keys(snapshot.data).forEach(k => {
+        localStorage.setItem(k, snapshot.data[k]);
+      });
+      alert("Pemulihan data berhasil! Halaman akan dimuat ulang.");
+      window.location.reload();
+    } catch (e) {
+      alert("Gagal memulihkan data: " + e.message);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (headerRef.current && !headerRef.current.contains(e.target)) {
@@ -58,14 +115,15 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
   };
 
   return (
-    <header ref={headerRef} className="fixed top-0 right-0 left-0 md:left-64 h-16 flex items-center justify-between px-8 z-50 bg-slate-900/40 backdrop-blur-md docked full-width border-b border-white/10 shadow-sm font-['Plus_Jakarta_Sans'] tracking-tight text-primary transition-colors duration-300">
-      {/* Brand / Title Area */}
-      <div className="flex items-center gap-4">
-        <button onClick={onLogoClick} className="text-2xl font-black text-primary italic font-['Plus_Jakarta_Sans'] tracking-tight md:hidden focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg px-1">HELFINE</button>
-        <h2 className="hidden md:block font-headline-md text-headline-md text-slate-200">{title}</h2>
-      </div>
-      {/* Search */}
-      <div className="hidden md:flex flex-1 max-w-md relative group ml-auto mr-8">
+    <>
+      <header ref={headerRef} className="fixed top-0 right-0 left-0 md:left-64 h-16 flex items-center justify-between px-8 z-50 bg-slate-900/40 backdrop-blur-md docked full-width border-b border-white/10 shadow-sm font-['Plus_Jakarta_Sans'] tracking-tight text-primary transition-colors duration-300">
+        {/* Brand / Title Area */}
+        <div className="flex items-center gap-4">
+          <button onClick={onLogoClick} className="text-2xl font-black text-primary italic font-['Plus_Jakarta_Sans'] tracking-tight md:hidden focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg px-1">HELFINE</button>
+          <h2 className="hidden md:block font-headline-md text-headline-md text-slate-200">{title}</h2>
+        </div>
+        {/* Search */}
+        <div className="hidden md:flex flex-1 max-w-md relative group ml-auto mr-8">
         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
         <input className="w-full bg-slate-800 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm text-slate-200 placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Cari transaksi atau kategori..." type="text"/>
       </div>
@@ -177,6 +235,10 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
                   <span className="material-symbols-outlined text-[18px]">security</span>
                   Keamanan & Privasi
                 </button>
+                <button onClick={() => { setIsBackupModalOpen(true); setActiveDropdown(null); }} className="w-full text-left px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-primary hover:text-primary-fixed">
+                  <span className="material-symbols-outlined text-[18px]">history</span>
+                  Backup & Pemulihan
+                </button>
               </div>
             </div>
           )}
@@ -237,8 +299,76 @@ export default function Header({ title = 'Dashboard', isPrivacyMode, setIsPrivac
             <span className="material-symbols-outlined text-2xl">menu</span>
           </button>
         </div>
-
       </div>
     </header>
+
+      {/* Backup & Restore Modal */}
+      {isBackupModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-surface dark:bg-surface-container-high w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-black/20">
+              <h3 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">history</span>
+                Backup & Pemulihan (Undo)
+              </h3>
+              <button onClick={() => setIsBackupModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 transition-colors">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+              
+              {/* Manual Backup Area */}
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                <h4 className="text-sm font-bold text-primary mb-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">save</span>
+                  Cadangan Manual (Aman)
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">Export seluruh data keuangan Anda ke sebuah file .json untuk disimpan di komputer, atau import file json sebelumnya untuk memulihkan data.</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button onClick={handleExportBackup} className="flex-1 bg-primary hover:bg-primary-fixed text-on-primary text-sm font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">download</span>
+                    Export Data (.json)
+                  </button>
+                  <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImportBackup} />
+                  <button onClick={() => fileInputRef.current?.click()} className="flex-1 bg-surface-container hover:bg-surface-container-high text-slate-800 dark:text-slate-200 text-sm font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 border border-outline-variant/50 transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">upload</span>
+                    Import Data
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto Snapshots */}
+              <div>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">restore_page</span>
+                  Riwayat Auto-Backup Lokal
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">Sistem otomatis menyimpan snapshot data setiap kali Anda membuka aplikasi. Klik "Kembalikan" untuk melakukan Undo/Rollback.</p>
+                
+                <div className="space-y-2">
+                  {(() => {
+                    const snaps = JSON.parse(localStorage.getItem('helfine_snapshots') || '[]');
+                    if (snaps.length === 0) return <p className="text-xs text-slate-500 italic p-4 text-center border border-dashed border-outline-variant rounded-lg">Belum ada riwayat snapshot tersimpan.</p>;
+                    
+                    return snaps.map((snap, idx) => (
+                      <div key={snap.id} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-surface-container-lowest/50 hover:border-primary/30 transition-colors">
+                        <div>
+                          <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Snapshot #{snaps.length - idx}</p>
+                          <p className="text-xs text-slate-500 font-data-mono">{new Date(snap.date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' })}</p>
+                        </div>
+                        <button onClick={() => handleRestoreSnapshot(snap)} className="text-xs bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold px-3 py-1.5 rounded-md transition-colors border border-rose-200 dark:border-rose-500/20">
+                          Kembalikan
+                        </button>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

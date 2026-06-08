@@ -126,14 +126,8 @@ function App() {
     const loadDB = async () => {
       try {
         const data = await fetchDatabase();
-        if (data.Accounts && data.Accounts.length > 0) {
-          setAccounts(data.Accounts);
-          localStorage.setItem('accounts_data', JSON.stringify(data.Accounts));
-        }
-        if (data.OperationalWallets && data.OperationalWallets.length > 0) {
-          setOperationalWallets(data.OperationalWallets);
-          localStorage.setItem('operational_data', JSON.stringify(data.OperationalWallets));
-        }
+        if (data.Accounts && data.Accounts.length > 0) setAccounts(data.Accounts);
+        if (data.OperationalWallets && data.OperationalWallets.length > 0) setOperationalWallets(data.OperationalWallets);
         
         // Sync to localStorage cache for components
         if (data.Cashflow) localStorage.setItem('cashflow_records', JSON.stringify(data.Cashflow));
@@ -149,6 +143,40 @@ function App() {
         setIsDbLoading(false);
       }
     };
+    
+    // Auto-Snapshot logic
+    try {
+      const keys = ['accounts_data', 'operational_wallets', 'cashflow_records', 'strategy_transactions', 'makan_transactions', 'trading_journal', 'resume_dynamic_history'];
+      let currentData = {};
+      let hasData = false;
+      keys.forEach(k => {
+        const item = localStorage.getItem(k);
+        if (item) {
+          currentData[k] = item;
+          hasData = true;
+        }
+      });
+      
+      if (hasData) {
+        const snapshots = JSON.parse(localStorage.getItem('helfine_snapshots') || '[]');
+        const lastSnapshot = snapshots.length > 0 ? snapshots[0] : null;
+        const isSame = lastSnapshot && JSON.stringify(lastSnapshot.data) === JSON.stringify(currentData);
+        
+        if (!isSame) {
+          const newSnapshot = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            data: currentData
+          };
+          
+          const updatedSnapshots = [newSnapshot, ...snapshots].slice(0, 10); // Keep last 10
+          localStorage.setItem('helfine_snapshots', JSON.stringify(updatedSnapshots));
+        }
+      }
+    } catch(e) {
+      console.error("Auto-snapshot error", e);
+    }
+
     loadDB();
   }, [isAuthenticated]);
 
