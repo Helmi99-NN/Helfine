@@ -26,6 +26,11 @@ export default function Strategy({ financialData }) {
   const [transferTo, setTransferTo] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
 
+  const [isPullModalOpen, setIsPullModalOpen] = useState(false);
+  const [pullAccount, setPullAccount] = useState('');
+  const [pullAmount, setPullAmount] = useState('');
+  const [pullMethod, setPullMethod] = useState('Saldo');
+
   const handleTransferWallets = () => {
     if (!transferFrom || !transferTo || !transferAmount) return;
     const amount = parseInt(transferAmount.replace(/\D/g, '')) || 0;
@@ -105,6 +110,54 @@ export default function Strategy({ financialData }) {
     financialData.syncSheet && financialData.syncSheet('OperationalWallets', resetWallets).catch(console.error);
 
     alert("Berhasil menyapu bersih sisa Pool Operasional ke dompet Tabungan (Gaji)!");
+    window.location.reload();
+  };
+
+  const handlePullFromSavings = () => {
+    const parsedAmount = parseFloat(pullAmount.toString().replace(/\D/g, ''));
+    if (!pullAccount || isNaN(parsedAmount) || parsedAmount <= 0) return;
+
+    const existingAccounts = financialData.accounts || [];
+    const sourceAccount = existingAccounts.find(a => a.id === pullAccount);
+    
+    if (!sourceAccount) return;
+    if (sourceAccount.value < parsedAmount) {
+      alert("Saldo di portofolio/tabungan tidak mencukupi!");
+      return;
+    }
+
+    const confirmPull = window.confirm(`Tarik Rp ${financialData.formatCurrency(parsedAmount)} dari ${sourceAccount.name} ke Saldo Operasional?`);
+    if (!confirmPull) return;
+
+    // Deduct from accounts
+    const newAccounts = existingAccounts.map(a => 
+      a.id === sourceAccount.id ? { ...a, value: a.value - parsedAmount } : a
+    );
+
+    // Create Income for Pool
+    const incomeRecord = {
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      type: 'Income',
+      category: `Tarik dari ${sourceAccount.name}`,
+      amount: parsedAmount,
+      notes: 'Pemindahan dari portofolio ke operasional',
+      isOperationalPool: true,
+      paymentMethod: pullMethod || 'Saldo',
+      transferDirection: null
+    };
+
+    const newRecords = [incomeRecord, ...cashflowRecords];
+
+    // Save
+    localStorage.setItem('accounts_data', JSON.stringify(newAccounts));
+    localStorage.setItem('cashflow_records', JSON.stringify(newRecords));
+    
+    financialData.setAccounts && financialData.setAccounts(newAccounts);
+    financialData.syncSheet && financialData.syncSheet('Accounts', newAccounts).catch(console.error);
+    financialData.syncSheet && financialData.syncSheet('Cashflow', newRecords).catch(console.error);
+
+    alert("Berhasil memindahkan dana ke Saldo Operasional!");
     window.location.reload();
   };
 
@@ -193,15 +246,62 @@ export default function Strategy({ financialData }) {
                   <span className="text-xs text-slate-400">Sisa belum dibagikan</span>
                 </div>
               </div>
-              <button 
-                onClick={handleTransferToSavings}
-                disabled={!financialData.operationalPoolBalance || financialData.operationalPoolBalance <= 0}
-                className="w-full sm:w-auto bg-primary hover:bg-primary-fixed text-on-primary font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="material-symbols-outlined text-[18px]">cleaning_services</span>
-                Sapu Bersih ke Tabungan
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button 
+                  onClick={() => setIsPullModalOpen(!isPullModalOpen)}
+                  className={`w-full sm:w-auto border text-sm font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${isPullModalOpen ? 'bg-primary/20 text-primary border-primary/50' : 'bg-surface-container hover:bg-surface-container-high text-slate-200 border-outline-variant/50'}`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">account_balance</span>
+                  Tarik dari Tabungan
+                </button>
+                <button 
+                  onClick={handleTransferToSavings}
+                  disabled={!financialData.operationalPoolBalance || financialData.operationalPoolBalance <= 0}
+                  className="w-full sm:w-auto bg-primary hover:bg-primary-fixed text-on-primary text-sm font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="material-symbols-outlined text-[18px]">cleaning_services</span>
+                  Sapu Bersih ke Tabungan
+                </button>
+              </div>
             </div>
+            
+            {/* Pull Modal Panel */}
+            {isPullModalOpen && (
+              <div className="mb-stack-md p-4 rounded-xl border border-primary/30 bg-primary/5 animate-in slide-in-from-top-4 duration-300">
+                <h4 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[18px]">account_balance</span>
+                  Tarik Dana dari Tabungan/Portofolio
+                </h4>
+                <div className="flex flex-col md:flex-row items-end gap-4">
+                  <div className="flex-1 w-full">
+                    <label className="block text-xs text-slate-400 mb-1">Sumber Tabungan</label>
+                    <select value={pullAccount} onChange={e => setPullAccount(e.target.value)} className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary [color-scheme:dark]">
+                      <option value="" disabled>Pilih Tabungan...</option>
+                      {(financialData.accounts || []).filter(a => a.value > 0).map(a => (
+                        <option key={a.id} value={a.id}>{a.name} (Sisa: Rp{financialData.formatCurrency(a.value)})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1 w-full">
+                    <label className="block text-xs text-slate-400 mb-1">Nominal (Rp)</label>
+                    <input type="text" value={pullAmount} onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, '');
+                      setPullAmount(raw ? parseInt(raw, 10).toLocaleString('id-ID') : '');
+                    }} placeholder="0" className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary font-data-mono" />
+                  </div>
+                  <div className="flex-1 w-full md:max-w-[150px]">
+                    <label className="block text-xs text-slate-400 mb-1">Metode Masuk</label>
+                    <select value={pullMethod} onChange={e => setPullMethod(e.target.value)} className="w-full bg-surface-container-lowest/50 border border-outline-variant rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary [color-scheme:dark]">
+                      <option value="Saldo">E-Money</option>
+                      <option value="Cash">Cash</option>
+                    </select>
+                  </div>
+                  <button onClick={handlePullFromSavings} disabled={!pullAccount || !pullAmount} className="w-full md:w-auto bg-primary hover:bg-primary-fixed text-on-primary font-bold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-[38px] flex items-center justify-center">
+                    Tarik
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1 content-start">
               {financialData.operationalWallets && financialData.operationalWallets.map((wallet) => {
