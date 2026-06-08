@@ -222,7 +222,7 @@ export default function AIAssistant({ financialData }) {
         }
       ];
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", tools }); 
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro", tools }); 
       
       const context = buildContext();
       
