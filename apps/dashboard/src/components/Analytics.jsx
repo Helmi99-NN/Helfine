@@ -48,15 +48,16 @@ export default function Analytics({ financialData }) {
 
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
     const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    // Push label towards outer edge (e.g. 75% of the way out)
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.75;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
     if (percent < 0.05) return null; // Hide very small labels
 
     return (
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="font-data-mono text-xs font-bold" style={{ textShadow: '0px 1px 2px rgba(0,0,0,0.5)' }}>
-        {`${(percent * 100).toFixed(0)}%`}
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="font-data-mono text-[14px] font-bold tracking-wider" style={{ textShadow: '1px 2px 4px rgba(0,0,0,0.8)' }}>
+        {`${(percent * 100).toFixed(0)} %`}
       </text>
     );
   };
@@ -93,38 +94,39 @@ export default function Analytics({ financialData }) {
             {compositionData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  {/* Bottom 3D Layer (Shadow/Thickness) */}
-                  <Pie
-                    data={compositionData}
-                    cx="50%"
-                    cy="54%"
-                    innerRadius={70}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                    isAnimationActive={false}
-                  >
-                    {compositionData.map((entry, index) => (
-                      <Cell key={`cell-depth-${index}`} fill={entry.color} style={{ filter: 'brightness(0.5)' }} />
-                    ))}
-                  </Pie>
-
-                  {/* Top Layer */}
+                  <defs>
+                    <filter id="pieBevel" x="-50%" y="-50%" width="200%" height="200%">
+                      <feDropShadow dx="2" dy="8" stdDeviation="5" floodColor="#000000" floodOpacity="0.5" />
+                      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur" />
+                      <feSpecularLighting in="blur" surfaceScale="6" specularConstant="1" specularExponent="30" lightingColor="#ffffff" result="specularOut">
+                        <fePointLight x="-100" y="-100" z="150" />
+                      </feSpecularLighting>
+                      <feComposite in="specularOut" in2="SourceAlpha" operator="in" result="specular" />
+                      <feMerge>
+                        <feMergeNode in="SourceGraphic" />
+                        <feMergeNode in="specular" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  
                   <Pie
                     data={compositionData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
-                    outerRadius={90}
-                    paddingAngle={5}
+                    innerRadius={0}
+                    outerRadius={105}
+                    paddingAngle={3}
                     dataKey="value"
                     stroke="none"
                     labelLine={false}
                     label={renderCustomizedLabel}
                   >
                     {compositionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color} 
+                        style={{ filter: 'url(#pieBevel)' }} 
+                      />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -138,11 +140,13 @@ export default function Analytics({ financialData }) {
               <div className="w-full h-full flex items-center justify-center text-slate-300">Belum ada data</div>
             )}
             
-            {/* Center Label */}
+            {/* Center 3D Overlay Disk */}
             {compositionData.length > 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="font-label-sm text-label-sm text-slate-300">Total</span>
-                <span className="font-data-mono text-data-mono text-primary text-lg">{totalAssets > 0 ? '100%' : '0%'}</span>
+                <div className="w-[100px] h-[100px] rounded-full bg-gradient-to-b from-[#f8f9fa] to-[#e9ecef] flex flex-col items-center justify-center shadow-[0_8px_15px_rgba(0,0,0,0.5),inset_0_-4px_8px_rgba(0,0,0,0.15),inset_0_4px_8px_rgba(255,255,255,1)] border border-white/50 relative">
+                  <span className="material-symbols-outlined text-slate-600 text-[32px] mb-1">groups</span>
+                  <span className="font-display-sm text-[10px] font-extrabold text-slate-700 tracking-widest text-center leading-tight">TOTAL<br/>ASET</span>
+                </div>
               </div>
             )}
           </div>

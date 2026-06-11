@@ -170,7 +170,7 @@ export default function Investments({ financialData }) {
             </h3>
             <div className="sm:text-right bg-slate-800/50 px-4 py-2 rounded-lg border border-white/10">
               <p className="font-label-sm text-label-sm text-slate-300">Total Alokasi Terkini</p>
-              <p className="font-display-sm text-2xl text-emerald-300 tracking-tight">Rp {financialData.formatCurrency(totalValue)}</p>
+              <p className="font-display-sm text-2xl text-primary tracking-tight">Rp {financialData.formatCurrency(totalValue)}</p>
             </div>
           </div>
           

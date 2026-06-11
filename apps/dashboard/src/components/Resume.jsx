@@ -104,6 +104,38 @@ export default function Resume({ financialData }) {
              const dateObj = new Date(monthLabel);
              monthLabel = `20 ${dateObj.toLocaleDateString('id-ID', { month: 'long' })}`;
            }
+           
+           // --- AUTO-FIX UNTUK DUPLIKASI NAMA AKUN ---
+           if (item.balances) {
+             const cleanedBalances = [];
+             item.balances.forEach(b => {
+               let newName = b.name;
+               const lowerName = newName.toLowerCase();
+               
+               // Hapus "Ajaib Andri"
+               if (lowerName === 'ajaib andri') return;
+               
+               // Jadikan satu "Bonus Mesin" ke "Komisi Mesin"
+               if (lowerName === 'bonus mesin' || lowerName === 'bonus mesin cv') {
+                 newName = 'Komisi Mesin';
+               }
+               
+               // Gaji jadikan satu
+               if (lowerName === 'gaji') {
+                 newName = 'Gaji';
+               }
+               
+               const existing = cleanedBalances.find(x => x.name === newName);
+               if (existing) {
+                 // Ambil nilai tertinggi jika ada duplikat di bulan yang sama untuk menghindari saldo ganda
+                 existing.value = Math.max(existing.value, b.value);
+               } else {
+                 cleanedBalances.push({ name: newName, value: b.value });
+               }
+             });
+             item.balances = cleanedBalances;
+           }
+
            uniqueHistoryMap.set(monthLabel, { ...item, month: monthLabel });
         });
         
@@ -141,6 +173,9 @@ export default function Resume({ financialData }) {
            if (makanSpent > 0) meiSnapshot.expenses.push({ name: 'Makan', value: makanSpent });
 
            uniqueHistoryMap.set("20 Mei", meiSnapshot);
+           localStorage.setItem('resume_dynamic_history', JSON.stringify(Array.from(uniqueHistoryMap.values())));
+        } else {
+           // Simpan juga kalau tidak ada snapshot mei (misal untuk bulan lain)
            localStorage.setItem('resume_dynamic_history', JSON.stringify(Array.from(uniqueHistoryMap.values())));
         }
 
@@ -215,7 +250,28 @@ export default function Resume({ financialData }) {
     };
   };
 
-  const dynamicHistory = [...savedHistory, getCurrentSnapshot()];
+  const dynamicHistory = [...savedHistory, getCurrentSnapshot()].map(item => {
+    if (item.balances) {
+      const cleanedBalances = [];
+      item.balances.forEach(b => {
+        let newName = b.name;
+        const lowerName = newName.toLowerCase();
+        
+        if (lowerName === 'ajaib andri') return;
+        if (lowerName === 'bonus mesin' || lowerName === 'bonus mesin cv') newName = 'Komisi Mesin';
+        if (lowerName === 'gaji') newName = 'Gaji';
+        
+        const existing = cleanedBalances.find(x => x.name === newName);
+        if (existing) {
+          existing.value = Math.max(existing.value, b.value);
+        } else {
+          cleanedBalances.push({ name: newName, value: b.value });
+        }
+      });
+      return { ...item, balances: cleanedBalances };
+    }
+    return item;
+  });
 
   const handleCloseBook = () => {
     const nextMonthToClose = getNextMonthToClose();
